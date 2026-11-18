@@ -1,45 +1,26 @@
-from typing import List, Union
-from pydantic import AnyHttpUrl, field_validator
+from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Nexora AI API"
-    API_V1_STR: str = "/api/v1"
-    ENVIRONMENT: str = "development"
+    APP_NAME: str = "nexora-ai-api"
+    APP_ENV: str = "development"
     DEBUG: bool = True
+    API_V1_PREFIX: str = "/api/v1"
+    DATABASE_URL: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/nexora_ai"
+    TEST_DATABASE_URL: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/nexora_ai_test"
+    FRONTEND_ORIGIN: str = "http://localhost:3000"
 
-    # Database
-    POSTGRES_SERVER: str = "localhost"
-    POSTGRES_PORT: int = 5432
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "password"
-    POSTGRES_DB: str = "nexora_ai"
-    DATABASE_URL: str | None = None
-
-    @field_validator("DATABASE_URL", mode="before")
-    def assemble_db_connection(cls, v: str | None, info) -> str:
-        if isinstance(v, str) and v:
-            return v
-        data = info.data
-        server = data.get("POSTGRES_SERVER", "localhost")
-        port = data.get("POSTGRES_PORT", 5432)
-        user = data.get("POSTGRES_USER", "postgres")
-        password = data.get("POSTGRES_PASSWORD", "password")
-        db = data.get("POSTGRES_DB", "nexora_ai")
-        return f"postgresql+psycopg2://{user}:{password}@{server}:{port}/{db}"
-
-    # CORS
-    BACKEND_CORS_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ]
+    @property
+    def cors_origins(self) -> List[str]:
+        origins = [origin.strip() for origin in self.FRONTEND_ORIGIN.split(",") if origin.strip()]
+        return origins or ["http://localhost:3000"]
 
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=True,
-        extra="ignore"
+        extra="ignore",
     )
 
 

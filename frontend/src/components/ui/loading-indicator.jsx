@@ -1,0 +1,27 @@
+import React from 'react';
+import { Loader2 } from 'lucide-react';
+import { cn } from '../../utils/cn';
+
+const sizes = {
+  sm: 'h-4 w-4',
+  md: 'h-6 w-6',
+  lg: 'h-8 w-8',
+};
+
+export function LoadingIndicator({
+  className,
+  size = 'md',
+  label = 'Loading...',
+  ...props
+}) {
+  return (
+    <div
+      role="status"
+      className={cn('inline-flex items-center justify-center text-primary', className)}
+      {...props}
+    >
+      <Loader2 className={cn('animate-spin', sizes[size] || sizes.md)} aria-hidden="true" />
+      <span className="sr-only">{label}</span>
+    </div>
+  );
+}

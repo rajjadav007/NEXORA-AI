@@ -8,9 +8,8 @@ from sqlalchemy import engine_from_config, pool
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.core.config import settings
+import app.models  # Registers SystemSetting, User with Base.metadata
 from app.database.base import Base
-# Import models here as created to ensure Alembic autogenerate discovers them
-# import app.models
 
 config = context.config
 
@@ -36,8 +35,10 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    configuration = config.get_section(config.config_ini_section, {})
+    configuration["sqlalchemy.url"] = settings.DATABASE_URL
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

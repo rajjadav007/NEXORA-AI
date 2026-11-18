@@ -2,7 +2,5 @@ from pydantic import BaseModel
 
 
 class HealthResponse(BaseModel):
-    status: str
-    environment: str
-    project: str
-    version: str
+    status: str = "healthy"
+    service: str = "nexora-ai-api"
