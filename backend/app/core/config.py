@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/nexora_ai"
     TEST_DATABASE_URL: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/nexora_ai_test"
     FRONTEND_ORIGIN: str = "http://localhost:3000"
+    RESUME_UPLOAD_MAX_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB default
+    RESUME_UPLOAD_STAGING_DIR: str = "storage/staging/resumes"
+    RESUME_STORAGE_DIR: str = "storage/resumes"
 
     @property
     def cors_origins(self) -> List[str]:

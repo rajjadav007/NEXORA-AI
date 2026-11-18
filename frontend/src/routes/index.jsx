@@ -7,6 +7,7 @@ import { RouteErrorFallback } from '../components/common/ErrorBoundary';
 import { LandingPage } from '../pages/LandingPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { ResumePage } from '../pages/ResumePage';
+import { ResumePreviewPage } from '../pages/ResumePreviewPage';
 import { JobsPage } from '../pages/JobsPage';
 import { EmployerPage } from '../pages/EmployerPage';
 import { MatchingPage } from '../pages/MatchingPage';
@@ -53,6 +54,14 @@ export const router = createBrowserRouter([
           {
             path: 'resume',
             element: <ResumePage />,
+          },
+          {
+            path: 'resume/preview',
+            element: <ResumePreviewPage />,
+          },
+          {
+            path: 'resume/:resumeId/preview',
+            element: <ResumePreviewPage />,
           },
           {
             path: 'jobs',

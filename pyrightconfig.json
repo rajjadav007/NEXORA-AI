@@ -1,0 +1,10 @@
+{
+  "venvPath": "backend",
+  "venv": ".venv",
+  "extraPaths": [
+    "backend",
+    "C:/Users/Lenovo/AppData/Local/Programs/Python/Python311/Lib/site-packages",
+    "C:/Users/Lenovo/AppData/Roaming/Python/Python311/site-packages"
+  ],
+  "reportMissingImports": "warning"
+}

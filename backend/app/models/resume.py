@@ -1,0 +1,76 @@
+"""
+Resume and ResumeVersion SQLAlchemy Models
+Phase 2 | Feature 6: Resume Storage
+"""
+
+import uuid
+from datetime import datetime
+from typing import Optional, List
+from sqlalchemy import (
+    String,
+    Text,
+    BigInteger,
+    Integer,
+    DateTime,
+    Uuid,
+    ForeignKey,
+    func,
+)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from app.database.base import Base
+
+
+class Resume(Base):
+    """
+    Primary resume record associating uploaded documents with users.
+    Maps to `resumes` table in DATABASE_SCHEMA.md.
+    """
+    __tablename__ = "resumes"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    storage_key: Mapped[str] = mapped_column(Text, nullable=False)
+    file_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    file_size: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    processing_status: Mapped[str] = mapped_column(String(30), nullable=False, default="COMPLETED")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    # Relationships
+    versions: Mapped[List["ResumeVersion"]] = relationship(
+        "ResumeVersion",
+        back_populates="resume",
+        cascade="all, delete-orphan",
+        order_by="ResumeVersion.version_number.desc()",
+    )
+    user = relationship("User", backref="resumes")
+
+
+class ResumeVersion(Base):
+    """
+    Version record for historical changes to a resume.
+    Maps to `resume_versions` table in DATABASE_SCHEMA.md.
+    """
+    __tablename__ = "resume_versions"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    resume_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    version_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    storage_key: Mapped[str] = mapped_column(Text, nullable=False)
+    extracted_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    cleaned_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    # Relationships
+    resume: Mapped["Resume"] = relationship("Resume", back_populates="versions")
