@@ -6,52 +6,89 @@ By connecting resume intelligence, job description parsing, market research, ski
 
 ---
 
-## 🚀 Key Features
+## 🏗️ Repository Architecture
 
-- **Intelligent Resume Parsing:** Deep analysis of experience, projects, skills, and education.
-- **Job Description Understanding & Role Alignment:** Matches candidate profiles against live industry expectations.
-- **Skill Gap & Readiness Analysis:** Accurately diagnoses missing proficiencies and generates measurable readiness scores.
-- **Personalized Career Roadmaps:** Step-by-step guidance, project recommendations, and structured learning pathways.
-- **Multi-Agent Orchestration & RAG:** Powered by LangChain, LangGraph, and domain-tuned retrieval-augmented generation.
+Modular monorepo separating frontend presentation from backend API services:
+
+```text
+nexora-ai/
+  frontend/          # React (Vite, Tailwind CSS, Shadcn UI)
+  backend/           # FastAPI (Python 3.11, SQLAlchemy, Alembic)
+  docs/              # Architectural specifications and PRD
+  scripts/           # Local development scripts
+  .gitignore         # Unified git ignore rules
+  .env.example       # Global environment example
+  README.md          # Project documentation
+```
+
+---
+
+## 🚀 Quickstart
+
+### Prerequisites
+- Node.js (v18+) & npm
+- Python (3.11+)
+
+### Backend Setup
+1. Navigate to backend:
+   ```bash
+   cd backend
+   ```
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv .venv
+   # Windows:
+   .venv\Scripts\activate
+   # Linux/macOS:
+   source .venv/bin/activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Copy environment configuration:
+   ```bash
+   cp .env.example .env
+   ```
+5. Run the development server:
+   ```bash
+   uvicorn app.main:app --reload --port 8000
+   ```
+   Interactive API documentation available at `http://localhost:8000/docs`.
+
+### Frontend Setup
+1. Navigate to frontend:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Copy environment configuration:
+   ```bash
+   cp .env.example .env
+   ```
+4. Run the Vite development server:
+   ```bash
+   npm run dev
+   ```
+   Application runs on `http://localhost:3000`.
 
 ---
 
 ## 📚 Project Documentation
 
-The repository contains comprehensive architectural and design specifications located in the [`docs/`](./docs) directory:
-
+Detailed system documentation is located in [`docs/`](./docs):
+- [Architecture Guide](./docs/ARCHITECTURE.md)
 - [Project Overview](./docs/PROJECT_OVERVIEW.md)
-- [Product Requirements Document (PRD)](./docs/PRD.md)
 - [System Architecture](./docs/SYSTEM_ARCHITECTURE.md)
-- [Database Schema](./docs/DATABASE_SCHEMA.md)
-- [Data Flow](./docs/DATA_FLOW.md)
-- [AI Model Strategy](./docs/AI_MODEL_STRATEGY.md)
-- [AI Agent Workflows](./docs/AI_AGENT_WORKFLOWS.md)
-- [LangChain & LangGraph Architecture](./docs/LANGCHAIN_LANGGRAPH.md)
-- [RAG Architecture](./docs/RAG_ARCHITECTURE.md)
+- [PRD](./docs/PRD.md)
 - [API Documentation](./docs/API_DOCUMENTATION.md)
-- [UI / UX Guidelines](./docs/UI_UX_GUIDELINES.md)
-- [Authentication & Security](./docs/AUTHENTICATION_SECURITY.md)
-- [Privacy & Data Handling](./docs/PRIVACY_DATA_HANDLING.md)
+- [Database Schema](./docs/DATABASE_SCHEMA.md)
 - [Tech Stack](./docs/TECH_STACK.md)
-- [Development Roadmap](./docs/DEVELOPMENT_ROADMAP.md)
-- [Environment Setup](./docs/ENVIRONMENT_SETUP.md)
-- [Testing Strategy](./docs/TESTING_STRATEGY.md)
-- [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md)
-
----
-
-## 🛠️ Tech Stack Overview
-
-- **Frontend:** Next.js / React, TypeScript, Tailwind CSS
-- **Backend:** Python (FastAPI) & Node.js microservices
-- **AI / LLM Frameworks:** LangChain, LangGraph, OpenAI / Anthropic / open-weights LLMs
-- **Vector Database & Search:** Pinecone / Qdrant / pgvector
-- **Database:** PostgreSQL & Redis
-- **DevOps:** Docker, GitHub Actions, Cloud Infrastructure
 
 ---
 
 ## 📄 License
-
 This project is licensed under the terms defined in the repository.
