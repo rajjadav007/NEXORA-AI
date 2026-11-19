@@ -574,8 +574,184 @@ Response:
 }
 ```
 
-## 8.3 Get Extracted Resume Information
+## 8.3 Personal Information Extraction (Phase 3 | Feature 13)
 
+### 8.3.1 Extract Personal Information
+**Endpoint:** `/resumes/{resume_id}/personal-info/extract`  
+**Method:** POST  
+**Access:** Authenticated User / Owner  
+**Query Parameters:**
+- `reprocess` (boolean, default: false): Re-extract and refresh fields
+- `force_overwrite` (boolean, default: false): Overwrite manual corrections
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Personal information extracted successfully",
+  "data": {
+    "id": "uuid",
+    "resume_id": "uuid",
+    "user_id": "uuid",
+    "full_name": "Raj Jadav",
+    "first_name": "Raj",
+    "last_name": "Jadav",
+    "email": "raj.jadav@example.com",
+    "phone": "+91 9876543210",
+    "country_code": "+91",
+    "location": {
+      "city": "Bengaluru",
+      "state": "Karnataka",
+      "country": "India"
+    },
+    "linkedin_url": "https://linkedin.com/in/rajjadav",
+    "github_url": "https://github.com/rajjadav",
+    "portfolio_url": "https://rajjadav.dev",
+    "other_urls": ["https://medium.com/@rajjadav"],
+    "extraction_status": "completed",
+    "confidence": {
+      "full_name": 0.98,
+      "email": 1.0,
+      "phone": 0.95,
+      "location": 0.85
+    },
+    "is_manually_edited": false,
+    "manually_edited_fields": []
+  }
+}
+```
+
+### 8.3.2 Get Extracted Personal Information
+**Endpoint:** `/resumes/{resume_id}/personal-info`  
+**Method:** GET  
+**Access:** Authenticated User / Owner  
+
+### 8.3.3 Update Personal Information Manually
+**Endpoint:** `/resumes/{resume_id}/personal-info`  
+**Method:** PATCH  
+**Access:** Authenticated User / Owner  
+**Request Body:**
+```json
+{
+  "full_name": "Raj Jadav",
+  "email": "new.email@example.com",
+  "phone": "+91 9876543210",
+  "location": {
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "country": "India"
+  }
+}
+```
+
+### 8.3.4 Reprocess Personal Information
+**Endpoint:** `/resumes/{resume_id}/personal-info/reprocess`  
+**Method:** POST  
+**Access:** Authenticated User / Owner  
+**Query Parameters:**
+- `force_overwrite` (boolean, default: false): Overwrite manual edits if true
+
+## 8.4 Education Analysis (Phase 3 | Feature 14)
+
+### 8.4.1 Extract Education Records
+**Endpoint:** `/resumes/{resume_id}/education/extract`  
+**Method:** POST  
+**Access:** Authenticated User / Owner  
+**Query Parameters:**
+- `reprocess` (boolean, default: false): Re-extract and refresh records
+- `force_overwrite` (boolean, default: false): Overwrite manual user corrections
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Education extracted successfully",
+  "data": [
+    {
+      "id": "uuid",
+      "resume_id": "uuid",
+      "user_id": "uuid",
+      "degree": "Bachelor of Computer Applications (BCA)",
+      "normalized_degree": "Bachelor of Computer Applications",
+      "degree_level": "undergraduate",
+      "field_of_study": "Computer Applications",
+      "specialization": null,
+      "institution": "Bangalore University",
+      "location": "Bengaluru",
+      "start_date": "2020",
+      "end_date": "2023",
+      "graduation_status": "completed",
+      "grade": {
+        "value": 8.42,
+        "type": "cgpa",
+        "scale": 10.0,
+        "raw_grade": "CGPA: 8.42 / 10.0"
+      },
+      "achievements": [],
+      "coursework": ["Data Structures", "Algorithms", "DBMS"],
+      "honors": [],
+      "source_evidence": ["Bachelor of Computer Applications (BCA)..."],
+      "extraction_confidence": 0.98,
+      "is_manually_edited": false,
+      "manually_edited_fields": [],
+      "created_at": "2026-11-19T22:50:00Z",
+      "updated_at": "2026-11-19T22:50:00Z"
+    }
+  ],
+  "total": 1,
+  "extraction_status": "completed"
+}
+```
+
+### 8.4.2 Get Education Records
+**Endpoint:** `/resumes/{resume_id}/education`  
+**Method:** GET  
+**Access:** Authenticated User / Owner  
+**Response (200 OK):** Chronologically sorted education records (ongoing/expected first, then descending by end date).
+
+### 8.4.3 Reprocess Education Extraction
+**Endpoint:** `/resumes/{resume_id}/education/reprocess`  
+**Method:** POST  
+**Access:** Authenticated User / Owner  
+**Query Parameters or JSON Body:**
+- `force_overwrite` (boolean, default: false): If false, preserves records with `is_manually_edited == True`
+
+### 8.4.4 Add Education Entry Manually
+**Endpoint:** `/resumes/{resume_id}/education`  
+**Method:** POST  
+**Access:** Authenticated User / Owner  
+**Request Body:**
+```json
+{
+  "degree": "Master of Computer Applications",
+  "institution": "Indian Institute of Science",
+  "location": "Bengaluru, India",
+  "start_date": "2023",
+  "end_date": "2025",
+  "graduation_status": "ongoing",
+  "grade": {
+    "value": 9.2,
+    "type": "cgpa",
+    "scale": 10.0
+  },
+  "achievements": ["Dean's Merit List"],
+  "coursework": ["Distributed Systems"],
+  "honors": ["Gold Medalist"]
+}
+```
+
+### 8.4.5 Update Education Entry
+**Endpoint:** `/resumes/{resume_id}/education/{education_id}`  
+**Method:** PATCH  
+**Access:** Authenticated User / Owner  
+**Request Body:** Partial dictionary of fields to update (`degree`, `institution`, `location`, `grade`, `graduation_status`, etc.). Marks `is_manually_edited = True`.
+
+### 8.4.6 Delete Education Entry
+**Endpoint:** `/resumes/{resume_id}/education/{education_id}`  
+**Method:** DELETE  
+**Access:** Authenticated User / Owner  
+
+## 8.5 Get Extracted Resume Information
 **Endpoint:** `/resume-analysis/{resume_id}/extracted`
 
 **Method:** GET

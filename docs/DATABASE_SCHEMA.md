@@ -232,23 +232,62 @@ Scores must follow documented evaluation rules.
 
 # 8. RESUME INTELLIGENCE TABLES
 
-## 8.1 education
+## 8.1 resume_personal_information (Phase 3 | Feature 13)
 
-**Purpose:** Store extracted education records.
+**Purpose:** Store extracted and validated candidate personal identity, contact information, and professional profiles.
 
 | Column | Data Type | Constraints |
 |---|---|---|
 | id | UUID | Primary Key |
-| resume_id | UUID | Foreign Key |
-| institution | VARCHAR(255) | Nullable |
-| degree | VARCHAR(150) | Nullable |
-| field_of_study | VARCHAR(150) | Nullable |
-| start_date | DATE | Nullable |
-| end_date | DATE | Nullable |
-| grade | VARCHAR(50) | Nullable |
-| description | TEXT | Nullable |
-| extraction_confidence | NUMERIC(4,3) | Nullable |
+| resume_id | UUID | Foreign Key (resumes.id, CASCADE), Unique |
+| user_id | UUID | Foreign Key (users.id, SET NULL), Nullable |
+| full_name | VARCHAR(255) | Nullable |
+| first_name | VARCHAR(100) | Nullable |
+| last_name | VARCHAR(100) | Nullable |
+| email | VARCHAR(255) | Nullable |
+| phone | VARCHAR(50) | Nullable |
+| country_code | VARCHAR(10) | Nullable |
+| location | JSONB | Nullable ({"city", "state", "country"}) |
+| linkedin_url | TEXT | Nullable |
+| github_url | TEXT | Nullable |
+| portfolio_url | TEXT | Nullable |
+| other_urls | JSONB | Default Empty Array |
+| extraction_status | VARCHAR(30) | Default 'completed' |
+| confidence | JSONB | Field-level confidence scores |
+| is_manually_edited | BOOLEAN | Default FALSE |
+| manually_edited_fields | JSONB | Default Empty Array |
 | created_at | TIMESTAMPTZ | Not Null |
+| updated_at | TIMESTAMPTZ | Not Null |
+
+## 8.2 education
+
+**Purpose:** Store extracted education records and user academic modifications (Phase 3 | Feature 14).
+
+| Column | Data Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | Primary Key | Unique education record ID |
+| resume_id | UUID | Foreign Key, CASCADE | Owning resume ID |
+| user_id | UUID | Foreign Key, SET NULL | Owning user ID |
+| degree | VARCHAR(255) | Nullable | Raw degree name from resume |
+| normalized_degree | VARCHAR(255) | Nullable | Standardized degree title (e.g. Bachelor of Technology) |
+| degree_level | VARCHAR(50) | Nullable | Academic tier (undergraduate, postgraduate, doctorate, etc.) |
+| field_of_study | VARCHAR(255) | Nullable | Academic discipline/major |
+| specialization | VARCHAR(255) | Nullable | Sub-specialization |
+| institution | VARCHAR(255) | Nullable | School, college, or university |
+| location | VARCHAR(255) | Nullable | City, state, or country |
+| start_date | VARCHAR(50) | Nullable | Start date (YYYY or YYYY-MM) |
+| end_date | VARCHAR(50) | Nullable | End date or Present |
+| graduation_status | VARCHAR(50) | Default 'completed' | Status: completed, ongoing, expected, discontinued |
+| grade | JSONB | Nullable | Structured grade {value, type, scale, raw_grade} |
+| achievements | JSONB | Default [] | List of academic achievements |
+| coursework | JSONB | Default [] | List of relevant coursework |
+| honors | JSONB | Default [] | List of academic honors / distinctions |
+| source_evidence | JSONB | Default [] | Snippets of resume text verifying entry |
+| extraction_confidence | NUMERIC(4,3) | Nullable | Calibrated confidence score (0.0 to 1.0) |
+| is_manually_edited | BOOLEAN | Default FALSE | Manual user edit protection flag |
+| manually_edited_fields | JSONB | Default [] | Field names modified by user |
+| created_at | TIMESTAMPTZ | Not Null | Creation timestamp |
+| updated_at | TIMESTAMPTZ | Not Null | Update timestamp |
 
 ## 8.2 experiences
 

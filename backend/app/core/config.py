@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     RESUME_UPLOAD_MAX_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB default
     RESUME_UPLOAD_STAGING_DIR: str = "storage/staging/resumes"
     RESUME_STORAGE_DIR: str = "storage/resumes"
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "qwen2.5:3b"
+    OLLAMA_TIMEOUT_SECONDS: float = 8.0
 
     @property
     def cors_origins(self) -> List[str]:

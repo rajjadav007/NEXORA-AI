@@ -20,6 +20,8 @@ import { Alert } from '../ui/alert';
 import { LoadingIndicator } from '../ui/loading-indicator';
 import { ResumeStructuredView } from './ResumeStructuredView';
 import { OriginalDocumentViewer } from './OriginalDocumentViewer';
+import { PersonalInfoCard } from './PersonalInfoCard';
+import { EducationSection } from './EducationSection';
 import { formatFileSize } from '../../hooks/useResumeUpload';
 import { saveResume } from '../../services/resumeService';
 import { cn } from '../../utils/cn';
@@ -194,6 +196,12 @@ export function ResumePreview({
 
   return (
     <div className={cn('space-y-6', className)}>
+      {/* Extracted Personal Information (Phase 3 Feature #13) */}
+      <PersonalInfoCard resumeId={resume_id} />
+
+      {/* Extracted Education Information (Phase 3 Feature #14) */}
+      <EducationSection resumeId={resume_id} />
+
       {/* Top Metadata Card */}
       <Card className="border-slate-200 shadow-sm overflow-hidden">
         <CardHeader className="border-b border-slate-100 bg-slate-50/50 pb-4">

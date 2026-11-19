@@ -224,7 +224,7 @@ export async function getSavedResumes(userId = null) {
     const errorMsg =
       responseBody.error?.message ||
       responseBody.detail ||
-      `Failed to list resumes with status ${response.status}`;
+      `Failed to load resumes with status ${response.status}`;
     const err = new Error(errorMsg);
     err.status = response.status;
     throw err;
@@ -234,12 +234,12 @@ export async function getSavedResumes(userId = null) {
 }
 
 /**
- * Retrieves details and version history for a stored resume.
+ * Retrieves a single permanently stored resume and its historical versions.
  *
- * @param {string} resumeId - UUID of the stored resume.
+ * @param {string} resumeId - UUID of the resume to retrieve.
  * @returns {Promise<object>}
  */
-export async function getSavedResume(resumeId) {
+export async function getStoredResume(resumeId) {
   const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}`;
   const response = await fetch(url, {
     method: 'GET',
@@ -261,6 +261,8 @@ export async function getSavedResume(resumeId) {
 
   return responseBody;
 }
+
+export const getSavedResume = getStoredResume;
 
 /**
  * Permanently deletes a stored resume and its associated storage files.
@@ -291,5 +293,328 @@ export async function deleteStoredResume(resumeId) {
   return responseBody;
 }
 
+// --------------------------------------------------------------------------
+// Feature #13: Personal Information Operations
+// --------------------------------------------------------------------------
 
+/**
+ * Extracts personal information from cleaned resume text.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @param {boolean} [reprocess=false] - Whether to re-run extraction.
+ * @param {boolean} [forceOverwrite=false] - Whether to overwrite manual user edits.
+ * @returns {Promise<object>}
+ */
+export async function extractPersonalInfo(resumeId, reprocess = false, forceOverwrite = false) {
+  const query = new URLSearchParams({
+    reprocess: String(reprocess),
+    force_overwrite: String(forceOverwrite),
+  });
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/personal-info/extract?${query.toString()}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to extract personal info with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}
+
+/**
+ * Retrieves previously extracted personal information for a resume.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @returns {Promise<object>}
+ */
+export async function getPersonalInfo(resumeId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/personal-info`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to load personal info with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}
+
+/**
+ * Updates candidate personal information manually.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @param {object} payload - Partial personal info fields to update.
+ * @returns {Promise<object>}
+ */
+export async function updatePersonalInfo(resumeId, payload) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/personal-info`;
+  const response = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to update personal info with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}
+
+/**
+ * Reprocesses personal information extraction on the resume.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @param {boolean} [forceOverwrite=false] - Whether to discard manual edits.
+ * @returns {Promise<object>}
+ */
+export async function reprocessPersonalInfo(resumeId, forceOverwrite = false) {
+  const query = new URLSearchParams({
+    force_overwrite: String(forceOverwrite),
+  });
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/personal-info/reprocess?${query.toString()}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to reprocess personal info with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}
+
+// --------------------------------------------------------------------------
+// Feature #14: Education Analysis Operations
+// --------------------------------------------------------------------------
+
+/**
+ * Extracts education qualifications from cleaned resume text.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @param {boolean} [reprocess=false] - Whether to re-run extraction.
+ * @param {boolean} [forceOverwrite=false] - Whether to overwrite manual user edits.
+ * @returns {Promise<object>}
+ */
+export async function extractEducation(resumeId, reprocess = false, forceOverwrite = false) {
+  const query = new URLSearchParams({
+    reprocess: String(reprocess),
+    force_overwrite: String(forceOverwrite),
+  });
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/education/extract?${query.toString()}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to extract education with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}
+
+/**
+ * Retrieves previously extracted education records for a resume.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @returns {Promise<object>}
+ */
+export async function getEducation(resumeId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/education`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to load education with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}
+
+/**
+ * Reprocesses education extraction on the resume.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @param {boolean} [forceOverwrite=false] - Whether to discard manual edits.
+ * @returns {Promise<object>}
+ */
+export async function reprocessEducation(resumeId, forceOverwrite = false) {
+  const query = new URLSearchParams({
+    force_overwrite: String(forceOverwrite),
+  });
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/education/reprocess?${query.toString()}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to reprocess education with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}
+
+/**
+ * Adds a new manual education record.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @param {object} payload - New education details.
+ * @returns {Promise<object>}
+ */
+export async function addEducation(resumeId, payload) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/education`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to add education with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}
+
+/**
+ * Updates an existing education record.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @param {string} educationId - UUID of the education record.
+ * @param {object} payload - Partial education fields to update.
+ * @returns {Promise<object>}
+ */
+export async function updateEducation(resumeId, educationId, payload) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/education/${encodeURIComponent(educationId)}`;
+  const response = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to update education with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}
+
+/**
+ * Deletes an education record.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @param {string} educationId - UUID of the education record.
+ * @returns {Promise<object>}
+ */
+export async function deleteEducation(resumeId, educationId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/education/${encodeURIComponent(educationId)}`;
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to delete education with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}

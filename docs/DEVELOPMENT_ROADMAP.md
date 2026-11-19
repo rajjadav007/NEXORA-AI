@@ -189,8 +189,8 @@ Convert extracted resume text into structured candidate information.
 
 | ID | Feature | Main Development Task |
 |---|---|---|
-| 13 | Personal Information Extraction | Extract name, email, phone, and links |
-| 14 | Education Analysis | Extract academic information |
+| 13 | Personal Information Extraction | Extract name, email, phone, and links (Completed) |
+| 14 | Education Analysis | Extract academic information (Completed) |
 | 15 | Experience Analysis | Extract work and internship experience |
 | 16 | Skills Extraction | Identify technical and professional skills |
 | 17 | Skill Normalization | Standardize skill names |

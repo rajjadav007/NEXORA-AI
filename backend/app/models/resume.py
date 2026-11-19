@@ -51,6 +51,18 @@ class Resume(Base):
         order_by="ResumeVersion.version_number.desc()",
     )
     user = relationship("User", backref="resumes")
+    personal_information = relationship(
+        "ResumePersonalInformation",
+        back_populates="resume",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    education_records = relationship(
+        "Education",
+        back_populates="resume",
+        cascade="all, delete-orphan",
+        order_by="Education.created_at",
+    )
 
 
 class ResumeVersion(Base):
