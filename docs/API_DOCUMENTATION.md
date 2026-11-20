@@ -877,6 +877,286 @@ Response:
 **Access:** Authenticated User / Owner  
 **Response (200 OK):** Chronological career transitions, internal promotions, employment gaps, and factual career progression observations.
 
+## 8.6 Skill Normalization Endpoints (Phase 3 | Feature 17)
+
+### 8.6.1 Extract and Normalize Skills
+**Endpoint:** `/resumes/{resume_id}/skills/extract`  
+**Method:** POST  
+**Access:** Authenticated User / Owner  
+**Query Parameters:**
+- `reprocess` (bool, default=false): Re-extract and renormalize skills from resume text.
+- `force_overwrite` (bool, default=false): Overwrite user manual edits if true.
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Skills extracted and normalized successfully",
+  "data": [
+    {
+      "id": "e8f9a0b1-c2d3-4e5f-6a7b-8c9d0e1f2a3b",
+      "resume_id": "c47d757f-a84e-49ee-9616-5628ca99c7c7",
+      "skill_id": "b1c2d3e4-f5a6-7b8c-9d0e-1f2a3b4c5d6e",
+      "original_name": "JS",
+      "canonical_name": "JavaScript",
+      "category": "Programming Languages",
+      "skill_type": "technical",
+      "normalization_method": "alias_match",
+      "confidence_score": 1.0,
+      "normalization_status": "normalized",
+      "source_sections": ["skills", "experience"],
+      "source_evidence": ["Programming Languages: JS, JavaScript, Python", "Built frontend micro-apps with React and JS"],
+      "aliases_detected": ["JS", "JavaScript"],
+      "occurrence_count": 2,
+      "is_manually_edited": false,
+      "manually_edited_fields": [],
+      "dictionary_version": "1.0.0"
+    }
+  ],
+  "summary": {
+    "total_original_skills": 18,
+    "total_normalized_skills": 12,
+    "aliases_matched": 6,
+    "duplicates_consolidated": 6,
+    "pending_reviews": 0,
+    "unknown_skills": 0,
+    "category_distribution": {
+      "Programming Languages": 4,
+      "Frameworks & Libraries": 4,
+      "Databases": 2,
+      "Cloud & DevOps": 2
+    },
+    "skill_type_distribution": {
+      "technical": 12
+    }
+  },
+  "total": 12,
+  "extraction_status": "completed"
+}
+```
+
+### 8.6.2 Get Normalized Skills
+**Endpoint:** `/resumes/{resume_id}/skills`  
+**Method:** GET  
+**Access:** Authenticated User / Owner  
+
+### 8.6.3 Direct Skill List Normalization
+**Endpoint:** `/resumes/{resume_id}/skills/normalize`  
+**Method:** POST  
+**Request Body:**
+```json
+{
+  "skills": ["JS", "Javascript", "ML", "K8s", "ReactJS", "ReactNative"],
+  "context_text": "Experienced full-stack engineer building AI platforms"
+}
+```
+
+### 8.6.4 Reprocess Skill Normalization
+**Endpoint:** `/resumes/{resume_id}/skills/reprocess`  
+**Method:** POST  
+**Query Parameters:** `force_overwrite` (bool, default=false)
+
+### 8.6.5 Get Normalization Summary
+**Endpoint:** `/resumes/{resume_id}/skills/summary`  
+**Method:** GET  
+
+### 8.6.6 Get Pending Review Skills
+**Endpoint:** `/resumes/{resume_id}/skills/pending-reviews`  
+**Method:** GET  
+
+### 8.6.7 Confirm Proposed Skill Mapping
+**Endpoint:** `/resumes/{resume_id}/skills/{skill_id}/confirm`  
+**Method:** POST  
+**Request Body (optional):**
+```json
+{
+  "canonical_name": "R"
+}
+```
+
+### 8.6.8 Reject Proposed Skill Mapping
+**Endpoint:** `/resumes/{resume_id}/skills/{skill_id}/reject`  
+**Method:** POST  
+
+### 8.6.9 Manually Update Skill Record
+**Endpoint:** `/resumes/{resume_id}/skills/{skill_id}`  
+**Method:** PATCH  
+**Request Body:**
+```json
+{
+  "canonical_name": "Python",
+  "category": "Programming Languages",
+  "skill_type": "technical"
+}
+```
+
+### 8.6.10 Delete Normalized Skill Record
+**Endpoint:** `/resumes/{resume_id}/skills/{skill_id}`  
+**Method:** DELETE  
+
+### 8.6.11 Get Global Canonical Skill Dictionary
+**Endpoint:** `/skills/dictionary`  
+**Method:** GET  
+
+### 8.6.12 Add Alias to Canonical Dictionary
+**Endpoint:** `/skills/dictionary/alias`  
+**Method:** POST  
+**Request Body:**
+```json
+{
+  "canonical_name": "Python",
+  "alias": "py3",
+  "category": "Programming Languages"
+}
+```
+
+## 8.7 Project Intelligence Endpoints (Phase 3 | Feature 18)
+
+### 8.7.1 Extract and Structure Projects
+**Endpoint:** `/resumes/{resume_id}/projects/extract`  
+**Method:** POST  
+**Access:** Authenticated User / Owner  
+**Query Parameters:**
+- `reprocess` (bool, default=false): Re-run project extraction from resume text.
+- `force_overwrite` (bool, default=false): Overwrite user manual edits if true.
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Projects extracted and structured successfully",
+  "data": [
+    {
+      "id": "e9a0b1c2-d3e4-4f5a-6b7c-8d9e0f1a2b3c",
+      "resume_id": "c47d757f-a84e-49ee-9616-5628ca99c7c7",
+      "project_title": "Cloud Task Orchestrator | Python, FastAPI, Docker, Redis",
+      "normalized_title": "Cloud Task Orchestrator",
+      "project_category": "personal",
+      "short_description": "Architected distributed job queue processing 50,000 tasks/second across 4 worker nodes.",
+      "detailed_description": "Architected distributed job queue processing 50,000 tasks/second across 4 worker nodes.\n- Reduced end-to-end task dispatch latency by 45% using Redis streams and async workers.",
+      "problem_statement": "High latency and dropped jobs during peak burst traffic.",
+      "proposed_solution": "Implemented distributed asynchronous event-driven task queue with Redis streams.",
+      "domain": "Cloud Infrastructure",
+      "project_role": "Backend Lead",
+      "team_type": "team",
+      "team_size": 3,
+      "start_date": "Jan 2023",
+      "end_date": null,
+      "is_ongoing": true,
+      "technologies": ["Python", "FastAPI", "Docker", "Redis"],
+      "skills": [
+        {
+          "original_name": "FastAPI",
+          "canonical_id": "b1c2d3e4-f5a6-7b8c-9d0e-1f2a3b4c5d6e",
+          "canonical_name": "FastAPI",
+          "category": "Frameworks & Libraries",
+          "confidence": 1.0,
+          "is_explicit": true
+        }
+      ],
+      "responsibilities": [
+        "Architected distributed job queue processing 50,000 tasks/second across 4 worker nodes.",
+        "Reduced end-to-end task dispatch latency by 45% using Redis streams."
+      ],
+      "achievements": [],
+      "measurable_outcomes": [
+        "Reduced end-to-end task dispatch latency by 45% using Redis streams and async workers.",
+        "Architected distributed job queue processing 50,000 tasks/second across 4 worker nodes."
+      ],
+      "project_links": [
+        {
+          "type": "github",
+          "url": "https://github.com/janedoe/task-orchestrator"
+        },
+        {
+          "type": "demo",
+          "url": "https://task-orchestrator.demo.app"
+        }
+      ],
+      "source_section": "PROJECTS",
+      "source_evidence": ["Cloud Task Orchestrator | Python, FastAPI, Docker, Redis (Jan 2023 - Present)"],
+      "confidence": 0.95,
+      "extraction_method": "hybrid",
+      "review_status": "confirmed",
+      "is_manually_edited": false,
+      "manually_edited_fields": []
+    }
+  ],
+  "summary": {
+    "total_projects": 2,
+    "categories": {"personal": 1, "academic": 1},
+    "domains_count": 2,
+    "unique_technologies_count": 6,
+    "github_repos_count": 1,
+    "live_demos_count": 1,
+    "pending_review_count": 0
+  },
+  "total": 2,
+  "extraction_status": "completed"
+}
+```
+
+### 8.7.2 Get All Projects for Resume
+**Endpoint:** `/resumes/{resume_id}/projects`  
+**Method:** GET  
+**Access:** Authenticated User / Owner  
+
+### 8.7.3 Get Project Analytics Summary
+**Endpoint:** `/resumes/{resume_id}/projects/summary`  
+**Method:** GET  
+**Access:** Authenticated User / Owner  
+
+### 8.7.4 Get Single Project Details
+**Endpoint:** `/resumes/{resume_id}/projects/{project_id}`  
+**Method:** GET  
+**Access:** Authenticated User / Owner  
+
+### 8.7.5 Get Project Canonical Skill Links
+**Endpoint:** `/resumes/{resume_id}/projects/{project_id}/skills`  
+**Method:** GET  
+**Access:** Authenticated User / Owner  
+
+### 8.7.6 Add Project Manually
+**Endpoint:** `/resumes/{resume_id}/projects`  
+**Method:** POST  
+**Access:** Authenticated User / Owner  
+**Request Body:**
+```json
+{
+  "project_title": "Distributed Task Queue",
+  "project_category": "personal",
+  "short_description": "Async task queue engine",
+  "domain": "Cloud Infrastructure",
+  "technologies": ["Python", "FastAPI", "Redis"],
+  "team_type": "individual"
+}
+```
+
+### 8.7.7 Update Project Manually
+**Endpoint:** `/resumes/{resume_id}/projects/{project_id}`  
+**Method:** PATCH  
+**Access:** Authenticated User / Owner  
+**Request Body:** Partial project fields to update.
+
+### 8.7.8 Confirm Project Review
+**Endpoint:** `/resumes/{resume_id}/projects/{project_id}/confirm`  
+**Method:** POST  
+**Access:** Authenticated User / Owner  
+**Request Body (Optional):** `{"notes": "Verified details"}`
+
+### 8.7.9 Delete Project
+**Endpoint:** `/resumes/{resume_id}/projects/{project_id}`  
+**Method:** DELETE  
+**Access:** Authenticated User / Owner  
+
+### 8.7.10 Reprocess Projects
+**Endpoint:** `/resumes/{resume_id}/projects/reprocess`  
+**Method:** POST  
+**Access:** Authenticated User / Owner  
+**Query Parameters:**
+- `force_overwrite` (bool, default=false): When false, preserves user-edited records.
+
+
 ## 8.6 Get Extracted Resume Information
 **Endpoint:** `/resume-analysis/{resume_id}/extracted`
 

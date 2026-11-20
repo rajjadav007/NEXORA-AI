@@ -69,6 +69,18 @@ class Resume(Base):
         cascade="all, delete-orphan",
         order_by="Experience.created_at",
     )
+    resume_skills = relationship(
+        "ResumeSkill",
+        back_populates="resume",
+        cascade="all, delete-orphan",
+        order_by="ResumeSkill.canonical_name",
+    )
+    projects = relationship(
+        "Project",
+        back_populates="resume",
+        cascade="all, delete-orphan",
+        order_by="Project.created_at",
+    )
 
 
 class ResumeVersion(Base):

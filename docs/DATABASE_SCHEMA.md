@@ -318,22 +318,53 @@ Scores must follow documented evaluation rules.
 | created_at | TIMESTAMPTZ | Not Null | Creation timestamp |
 | updated_at | TIMESTAMPTZ | Not Null | Update timestamp |
 
-## 8.3 projects
+## 8.3 projects (Phase 3 | Feature 18: Project Intelligence)
 
-**Purpose:** Store projects extracted from resumes or added by users.
+**Purpose:** Store structured candidate project intelligence, architectures, narratives, roles, and linked Feature #17 canonical skills extracted from resumes or added manually by users.
 
-| Column | Data Type | Constraints |
-|---|---|---|
-| id | UUID | Primary Key |
-| resume_id | UUID | Foreign Key, Nullable |
-| user_id | UUID | Foreign Key |
-| project_name | VARCHAR(255) | Not Null |
-| description | TEXT | Nullable |
-| project_url | TEXT | Nullable |
-| github_url | TEXT | Nullable |
-| technologies | JSONB | Default Empty Array |
-| contributions | TEXT | Nullable |
-| created_at | TIMESTAMPTZ | Not Null |
+| Column | Data Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | Primary Key, Default uuid4 | Unique project record identifier |
+| resume_id | UUID | Foreign Key (resumes.id, ON DELETE CASCADE), Index | Associated resume record |
+| user_id | UUID | Foreign Key (users.id, ON DELETE SET NULL), Nullable | Associated user account |
+| project_title | VARCHAR(255) | Not Null | Original extracted project title |
+| normalized_title | VARCHAR(255) | Not Null, Index | Cleaned, standardized project title |
+| project_category | VARCHAR(50) | Not Null, Index, Default 'other' | Category: academic, personal, hackathon, research, open_source, internship, professional, freelance, other |
+| short_description | TEXT | Nullable | 1-2 sentence brief summary |
+| detailed_description | TEXT | Nullable | Comprehensive project overview |
+| problem_statement | TEXT | Nullable | Specific problem or challenge addressed |
+| proposed_solution | TEXT | Nullable | Architectural or procedural solution implemented |
+| domain | VARCHAR(100) | Nullable, Index | Industry or technical domain (e.g. FinTech, Cloud) |
+| project_role | VARCHAR(100) | Nullable | Candidate role (e.g. Lead Developer, Researcher) |
+| team_type | VARCHAR(30) | Not Null, Default 'unknown' | individual, team, or unknown |
+| team_size | INTEGER | Nullable | Number of members on the team |
+| start_date | VARCHAR(50) | Nullable | Start date (YYYY or YYYY-MM) |
+| end_date | VARCHAR(50) | Nullable | End date (YYYY or YYYY-MM) |
+| is_ongoing | BOOLEAN | Not Null, Default false | Whether project is currently ongoing |
+| technologies | JSONB | Not Null, Default '[]' | List of raw/standardized technology names |
+| skills | JSONB | Not Null, Default '[]' | Mapped canonical skills from Feature #17 dictionary |
+| responsibilities | JSONB | Not Null, Default '[]' | Individual contributions and tasks |
+| achievements | JSONB | Not Null, Default '[]' | Awards, contest wins, publications |
+| measurable_outcomes | JSONB | Not Null, Default '[]' | Quantified performance results (%, latencies, counts) |
+| project_links | JSONB | Not Null, Default '[]' | External URLs tagged by type (github, demo, website, docs) |
+| source_section | VARCHAR(100) | Not Null, Default 'projects' | Resume section where project was found |
+| source_evidence | JSONB | Not Null, Default '[]' | Verbatim text snippets supporting extraction |
+| confidence | FLOAT | Not Null, Default 1.0 | Evidence-backed confidence score [0.0 - 1.0] |
+| extraction_method | VARCHAR(30) | Not Null, Default 'hybrid' | deterministic, ai_assisted, hybrid, manual |
+| review_status | VARCHAR(30) | Not Null, Default 'pending', Index | pending, confirmed, needs_review |
+| is_manually_edited | BOOLEAN | Not Null, Default false, Index | Protection flag against automated overwrite |
+| manually_edited_fields | JSONB | Not Null, Default '[]' | List of field names edited by user |
+| created_at | TIMESTAMPTZ | Not Null, Default CURRENT_TIMESTAMP | Record creation timestamp |
+| updated_at | TIMESTAMPTZ | Not Null, Default CURRENT_TIMESTAMP | Record update timestamp |
+
+**Indexes:**
+- `ix_projects_resume_id` on `resume_id`
+- `ix_projects_normalized_title` on `normalized_title`
+- `ix_projects_category` on `project_category`
+- `ix_projects_domain` on `domain`
+- `ix_projects_review_status` on `review_status`
+- `ix_projects_is_manually_edited` on `is_manually_edited`
+- `ix_projects_composite_resume_title` on `(resume_id, normalized_title)`
 
 ## 8.4 certifications
 
@@ -406,6 +437,8 @@ Example categories:
 | id | UUID | Primary Key |
 | skill_id | UUID | Foreign Key |
 | alias | VARCHAR(150) | Not Null |
+| normalized_alias | VARCHAR(150) | Not Null |
+| is_active | BOOLEAN | Default True |
 | created_at | TIMESTAMPTZ | Not Null |
 
 Example:
@@ -415,6 +448,33 @@ Example:
 | JavaScript | JS |
 | PostgreSQL | Postgres |
 | Machine Learning | ML |
+
+## 9.4 resume_skills
+
+**Purpose:** Store candidate resume-specific normalized skills with provenance, section evidence, and manual edits (Phase 3 | Feature 17).
+
+| Column | Data Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | Primary Key | Unique resume skill record ID |
+| resume_id | UUID | Foreign Key (resumes.id, CASCADE) | Associated resume ID |
+| user_id | UUID | Foreign Key (users.id, SET NULL) | Owning user ID |
+| skill_id | UUID | Foreign Key (skills.id, SET NULL) | Canonical catalog ID |
+| original_name | VARCHAR(150) | Not Null | First extracted raw skill name |
+| canonical_name | VARCHAR(150) | Not Null | Standardized canonical skill name |
+| category | VARCHAR(100) | Default 'Other' | Category taxonomy |
+| skill_type | VARCHAR(50) | Default 'technical' | technical, soft, or tool |
+| normalization_method | VARCHAR(50) | Default 'exact_match' | exact_match, alias_match, format_normalization, contextual_match, semantic_suggestion, user_manual |
+| confidence_score | FLOAT | Default 1.0 | Evidence-backed confidence score |
+| normalization_status | VARCHAR(50) | Default 'normalized' | normalized, pending_review, confirmed, rejected |
+| source_sections | JSONB | Default [] | Resume sections where skill appeared |
+| source_evidence | JSONB | Default [] | Text snippets verifying the skill |
+| aliases_detected | JSONB | Default [] | All alias forms detected |
+| occurrence_count | INTEGER | Default 1 | Total mentions consolidated |
+| is_manually_edited | BOOLEAN | Default False | Manual modification protection flag |
+| manually_edited_fields | JSONB | Default [] | Field names modified manually |
+| dictionary_version | VARCHAR(20) | Default '1.0.0' | Dictionary version used |
+| created_at | TIMESTAMPTZ | Not Null | Creation timestamp |
+| updated_at | TIMESTAMPTZ | Not Null | Last update timestamp |
 
 # 10. JOB INTELLIGENCE TABLES
 
