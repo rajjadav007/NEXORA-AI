@@ -618,3 +618,254 @@ export async function deleteEducation(resumeId, educationId) {
 
   return responseBody;
 }
+
+// ============================================================================
+// Phase 3 | Feature 15: Experience Analysis API Operations
+// ============================================================================
+
+/**
+ * Extracts, normalizes, validates, and orders work experience entries from a resume.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @param {boolean} [reprocess=false] - Whether to re-extract experience.
+ * @param {boolean} [forceOverwrite=false] - Whether to overwrite user manual edits on reprocess.
+ * @returns {Promise<object>}
+ */
+export async function extractExperience(resumeId, reprocess = false, forceOverwrite = false) {
+  const params = new URLSearchParams();
+  if (reprocess) params.append('reprocess', 'true');
+  if (forceOverwrite) params.append('force_overwrite', 'true');
+  const query = params.toString() ? `?${params.toString()}` : '';
+
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/experience/extract${query}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to extract experience with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}
+
+/**
+ * Retrieves extracted work experience records for a given resume.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @returns {Promise<object>}
+ */
+export async function getExperience(resumeId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/experience`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to retrieve experience with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}
+
+/**
+ * Reprocesses work experience extraction while protecting manual user edits.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @param {boolean} [forceOverwrite=false] - Whether to discard manual edits.
+ * @returns {Promise<object>}
+ */
+export async function reprocessExperience(resumeId, forceOverwrite = false) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/experience/reprocess`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ force_overwrite: forceOverwrite }),
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to reprocess experience with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}
+
+/**
+ * Adds a new manual experience record.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @param {object} payload - New experience details.
+ * @returns {Promise<object>}
+ */
+export async function addExperience(resumeId, payload) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/experience`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to add experience with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}
+
+/**
+ * Updates an existing experience record.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @param {string} experienceId - UUID of the experience record.
+ * @param {object} payload - Partial experience fields to update.
+ * @returns {Promise<object>}
+ */
+export async function updateExperience(resumeId, experienceId, payload) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/experience/${encodeURIComponent(experienceId)}`;
+  const response = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to update experience with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}
+
+/**
+ * Deletes an experience record.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @param {string} experienceId - UUID of the experience record.
+ * @returns {Promise<object>}
+ */
+export async function deleteExperience(resumeId, experienceId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/experience/${encodeURIComponent(experienceId)}`;
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to delete experience with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}
+
+/**
+ * Retrieves aggregate experience summary metrics.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @returns {Promise<object>}
+ */
+export async function getExperienceSummary(resumeId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/experience/summary`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to retrieve experience summary with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}
+
+/**
+ * Retrieves career progression analysis and transitions.
+ *
+ * @param {string} resumeId - UUID or staging ID of the resume.
+ * @returns {Promise<object>}
+ */
+export async function getCareerProgression(resumeId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/experience/progression`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to retrieve career progression with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+
+  return responseBody;
+}

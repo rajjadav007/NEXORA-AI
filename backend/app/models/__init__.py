@@ -4,6 +4,7 @@ from app.models.user import User
 from app.models.resume import Resume, ResumeVersion
 from app.models.personal_information import ResumePersonalInformation
 from app.models.education import Education
+from app.models.experience import Experience
 
 __all__ = [
     "Base",
@@ -13,4 +14,5 @@ __all__ = [
     "ResumeVersion",
     "ResumePersonalInformation",
     "Education",
+    "Experience",
 ]

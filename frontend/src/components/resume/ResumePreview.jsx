@@ -22,6 +22,7 @@ import { ResumeStructuredView } from './ResumeStructuredView';
 import { OriginalDocumentViewer } from './OriginalDocumentViewer';
 import { PersonalInfoCard } from './PersonalInfoCard';
 import { EducationSection } from './EducationSection';
+import { ExperienceSection } from './ExperienceSection';
 import { formatFileSize } from '../../hooks/useResumeUpload';
 import { saveResume } from '../../services/resumeService';
 import { cn } from '../../utils/cn';
@@ -198,6 +199,9 @@ export function ResumePreview({
     <div className={cn('space-y-6', className)}>
       {/* Extracted Personal Information (Phase 3 Feature #13) */}
       <PersonalInfoCard resumeId={resume_id} />
+
+      {/* Extracted Professional Experience (Phase 3 Feature #15) */}
+      <ExperienceSection resumeId={resume_id} />
 
       {/* Extracted Education Information (Phase 3 Feature #14) */}
       <EducationSection resumeId={resume_id} />

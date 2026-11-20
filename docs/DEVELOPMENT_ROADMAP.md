@@ -191,7 +191,7 @@ Convert extracted resume text into structured candidate information.
 |---|---|---|
 | 13 | Personal Information Extraction | Extract name, email, phone, and links (Completed) |
 | 14 | Education Analysis | Extract academic information (Completed) |
-| 15 | Experience Analysis | Extract work and internship experience |
+| 15 | Experience Analysis | Extract work and internship experience (Completed) |
 | 16 | Skills Extraction | Identify technical and professional skills |
 | 17 | Skill Normalization | Standardize skill names |
 | 18 | Project Intelligence | Extract project information |

@@ -63,6 +63,12 @@ class Resume(Base):
         cascade="all, delete-orphan",
         order_by="Education.created_at",
     )
+    experience_records = relationship(
+        "Experience",
+        back_populates="resume",
+        cascade="all, delete-orphan",
+        order_by="Experience.created_at",
+    )
 
 
 class ResumeVersion(Base):

@@ -289,23 +289,34 @@ Scores must follow documented evaluation rules.
 | created_at | TIMESTAMPTZ | Not Null | Creation timestamp |
 | updated_at | TIMESTAMPTZ | Not Null | Update timestamp |
 
-## 8.2 experiences
+## 8.3 experiences
 
-**Purpose:** Store employment and internship information.
+**Purpose:** Store extracted professional experience records, technical contributions, and user modifications (Phase 3 | Feature 15).
 
-| Column | Data Type | Constraints |
-|---|---|---|
-| id | UUID | Primary Key |
-| resume_id | UUID | Foreign Key |
-| company_name | VARCHAR(255) | Nullable |
-| job_title | VARCHAR(150) | Nullable |
-| employment_type | VARCHAR(50) | Nullable |
-| start_date | DATE | Nullable |
-| end_date | DATE | Nullable |
-| is_current | BOOLEAN | Default FALSE |
-| description | TEXT | Nullable |
-| achievements | JSONB | Default Empty Array |
-| created_at | TIMESTAMPTZ | Not Null |
+| Column | Data Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | Primary Key | Unique experience record ID |
+| resume_id | UUID | Foreign Key, CASCADE | Owning resume ID |
+| user_id | UUID | Foreign Key, SET NULL | Owning user ID |
+| company | VARCHAR(255) | Nullable | Employer / Organization name |
+| job_title | VARCHAR(255) | Nullable | Role / Job title |
+| employment_type | VARCHAR(50) | Default 'full_time' | Type (full_time, internship, freelance, contract, part_time, research, volunteer, etc.) |
+| location | VARCHAR(255) | Nullable | Work location or Remote |
+| start_date | VARCHAR(50) | Nullable | Start date (YYYY or YYYY-MM) |
+| end_date | VARCHAR(50) | Nullable | End date (YYYY or YYYY-MM) |
+| is_current | BOOLEAN | Default FALSE | Active current employment flag |
+| duration_months | INTEGER | Nullable | Computed duration in months |
+| responsibilities | JSONB | Default [] | Structured job responsibilities |
+| technical_contributions | JSONB | Default [] | Software, AI, and technical pipeline contributions |
+| technologies | JSONB | Default [] | Tools, libraries, and technologies used |
+| achievements | JSONB | Default [] | Key accomplishments |
+| measurable_impact | JSONB | Default [] | Quantified metrics (latencies, % gains, throughput) |
+| source_evidence | JSONB | Default [] | Verifying text snippets from resume |
+| extraction_confidence | FLOAT | Nullable | Evidence-based confidence score (0.0 to 1.0) |
+| is_manually_edited | BOOLEAN | Default FALSE | Manual user edit protection flag |
+| manually_edited_fields | JSONB | Default [] | Field names modified by user |
+| created_at | TIMESTAMPTZ | Not Null | Creation timestamp |
+| updated_at | TIMESTAMPTZ | Not Null | Update timestamp |
 
 ## 8.3 projects
 

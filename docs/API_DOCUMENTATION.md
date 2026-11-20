@@ -751,7 +751,133 @@ Response:
 **Method:** DELETE  
 **Access:** Authenticated User / Owner  
 
-## 8.5 Get Extracted Resume Information
+## 8.5 Experience Analysis (Phase 3 | Feature 15)
+
+### 8.5.1 Extract Experience Records
+**Endpoint:** `/resumes/{resume_id}/experience/extract`  
+**Method:** POST  
+**Access:** Authenticated User / Owner  
+**Query Parameters:**
+- `reprocess` (boolean, default: false): Re-extract and refresh records
+- `force_overwrite` (boolean, default: false): Overwrite manual user corrections
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Experience extracted successfully",
+  "data": [
+    {
+      "id": "uuid",
+      "resume_id": "uuid",
+      "user_id": "uuid",
+      "company": "Acme Technologies",
+      "job_title": "AI Engineer Intern",
+      "employment_type": "internship",
+      "location": "Bengaluru, India",
+      "start_date": "2025-06",
+      "end_date": "2025-09",
+      "is_current": false,
+      "duration_months": 3,
+      "responsibilities": ["Developed Python-based AI applications"],
+      "technical_contributions": ["Implemented model inference pipelines"],
+      "technologies": ["Python", "FastAPI", "LangChain"],
+      "achievements": ["Improved inference latency by 35%"],
+      "measurable_impact": ["35% latency improvement"],
+      "source_evidence": ["AI Engineer Intern at Acme Technologies"],
+      "extraction_confidence": 0.95,
+      "is_manually_edited": false,
+      "manually_edited_fields": [],
+      "created_at": "2026-11-20T15:00:00Z",
+      "updated_at": "2026-11-20T15:00:00Z"
+    }
+  ],
+  "summary": {
+    "total_experience_months": 3,
+    "total_experience_years": 0.2,
+    "employment_count": 1,
+    "full_time_count": 0,
+    "internship_count": 1,
+    "freelance_count": 0,
+    "contract_count": 0,
+    "apprenticeship_count": 0,
+    "research_count": 0,
+    "volunteer_count": 0,
+    "other_count": 0,
+    "most_recent_role": {
+      "company": "Acme Technologies",
+      "job_title": "AI Engineer Intern"
+    },
+    "identified_technologies": ["Python", "FastAPI", "LangChain"],
+    "career_progression_observations": [
+      "Candidate has 1 professional role as AI Engineer Intern at Acme Technologies."
+    ],
+    "extraction_status": "completed"
+  },
+  "total": 1,
+  "extraction_status": "completed"
+}
+```
+
+### 8.5.2 Get Experience Records
+**Endpoint:** `/resumes/{resume_id}/experience`  
+**Method:** GET  
+**Access:** Authenticated User / Owner  
+**Response (200 OK):** Chronologically sorted experience records and summary metrics.
+
+### 8.5.3 Reprocess Experience Extraction
+**Endpoint:** `/resumes/{resume_id}/experience/reprocess`  
+**Method:** POST  
+**Access:** Authenticated User / Owner  
+**Query Parameters or JSON Body:**
+- `force_overwrite` (boolean, default: false): If false, preserves records with `is_manually_edited == True`
+
+### 8.5.4 Add Experience Entry Manually
+**Endpoint:** `/resumes/{resume_id}/experience`  
+**Method:** POST  
+**Access:** Authenticated User / Owner  
+**Request Body:**
+```json
+{
+  "company": "Example Systems",
+  "job_title": "Senior AI Engineer",
+  "employment_type": "full_time",
+  "location": "Bengaluru, India",
+  "start_date": "2024-01",
+  "end_date": null,
+  "is_current": true,
+  "responsibilities": ["Architected distributed model inference services"],
+  "technical_contributions": ["Deployed FastAPI microservices with Docker"],
+  "technologies": ["Python", "FastAPI", "Docker", "PyTorch"],
+  "achievements": ["Reduced latency by 40%"],
+  "measurable_impact": ["40% latency reduction"]
+}
+```
+
+### 8.5.5 Update Experience Entry
+**Endpoint:** `/resumes/{resume_id}/experience/{experience_id}`  
+**Method:** PATCH  
+**Access:** Authenticated User / Owner  
+**Request Body:** Partial dictionary of fields to update (`company`, `job_title`, `employment_type`, `location`, `start_date`, `end_date`, `is_current`, `responsibilities`, etc.). Marks `is_manually_edited = True`.
+
+### 8.5.6 Delete Experience Entry
+**Endpoint:** `/resumes/{resume_id}/experience/{experience_id}`  
+**Method:** DELETE  
+**Access:** Authenticated User / Owner  
+
+### 8.5.7 Get Experience Summary
+**Endpoint:** `/resumes/{resume_id}/experience/summary`  
+**Method:** GET  
+**Access:** Authenticated User / Owner  
+**Response (200 OK):** Non-overlapping aggregate duration, breakdown counts by employment type, top technologies, and career observations.
+
+### 8.5.8 Get Career Progression
+**Endpoint:** `/resumes/{resume_id}/experience/progression`  
+**Method:** GET  
+**Access:** Authenticated User / Owner  
+**Response (200 OK):** Chronological career transitions, internal promotions, employment gaps, and factual career progression observations.
+
+## 8.6 Get Extracted Resume Information
 **Endpoint:** `/resume-analysis/{resume_id}/extracted`
 
 **Method:** GET
