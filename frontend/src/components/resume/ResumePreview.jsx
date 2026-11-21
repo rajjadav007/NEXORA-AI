@@ -26,6 +26,8 @@ import { ExperienceSection } from './ExperienceSection';
 import { ProjectsSection } from './ProjectsSection';
 import { CertificationsAchievementsSection } from './CertificationsAchievementsSection';
 import { SkillsSection } from './SkillsSection';
+import { ResumeQualityDashboard } from './ResumeQualityDashboard';
+import { ResumeStrengthDashboard } from './ResumeStrengthDashboard';
 import { formatFileSize } from '../../hooks/useResumeUpload';
 import { saveResume } from '../../services/resumeService';
 import { cn } from '../../utils/cn';
@@ -200,6 +202,12 @@ export function ResumePreview({
 
   return (
     <div className={cn('space-y-6', className)}>
+      {/* Resume Quality Score Engine (Phase 4 Feature #21) */}
+      <ResumeQualityDashboard resumeId={resume_id} />
+
+      {/* Resume Strength Analysis (Phase 4 Feature #22) */}
+      <ResumeStrengthDashboard resumeId={resume_id} />
+
       {/* Extracted Personal Information (Phase 3 Feature #13) */}
       <PersonalInfoCard resumeId={resume_id} />
 

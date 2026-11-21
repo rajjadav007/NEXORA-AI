@@ -93,6 +93,18 @@ class Resume(Base):
         cascade="all, delete-orphan",
         order_by="Achievement.created_at",
     )
+    quality_score = relationship(
+        "ResumeQualityScore",
+        back_populates="resume",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    strength_analysis = relationship(
+        "ResumeStrengthAnalysis",
+        back_populates="resume",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
 
 class ResumeVersion(Base):

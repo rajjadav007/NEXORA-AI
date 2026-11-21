@@ -2478,6 +2478,9 @@ export async function extractProjects(resumeId, reprocess = false, forceOverwrit
   return responseBody;
 }
 
+
+
+
 /**
  * Retrieves all extracted projects and summary analytics for a resume.
  *
@@ -2500,6 +2503,9 @@ export async function getProjects(resumeId) {
   }
   return responseBody;
 }
+
+
+
 
 /**
  * Retrieves single project details.
@@ -2524,6 +2530,9 @@ export async function getProjectDetails(resumeId, projectId) {
   }
   return responseBody;
 }
+
+
+
 
 /**
  * Adds a new project manually.
@@ -2552,6 +2561,9 @@ export async function addProject(resumeId, projectData) {
   }
   return responseBody;
 }
+
+
+
 
 /**
  * Updates an existing project.
@@ -2582,6 +2594,9 @@ export async function updateProject(resumeId, projectId, patchData) {
   return responseBody;
 }
 
+
+
+
 /**
  * Deletes a project.
  *
@@ -2607,6 +2622,9 @@ export async function deleteProject(resumeId, projectId) {
   }
   return responseBody;
 }
+
+
+
 
 /**
  * Reprocesses projects extraction preserving manual edits.
@@ -2635,6 +2653,9 @@ export async function reprocessProjects(resumeId, forceOverwrite = false) {
   return responseBody;
 }
 
+
+
+
 /**
  * Retrieves aggregate project metrics summary for a resume.
  *
@@ -2658,6 +2679,9 @@ export async function getProjectsSummary(resumeId) {
   return responseBody;
 }
 
+
+
+
 /**
  * Retrieves projects pending user review.
  *
@@ -2680,6 +2704,9 @@ export async function getPendingProjectsReviews(resumeId) {
   }
   return responseBody;
 }
+
+
+
 
 /**
  * Confirms an extracted project review status.
@@ -2710,6 +2737,9 @@ export async function confirmProject(resumeId, projectId, notes = '') {
   return responseBody;
 }
 
+
+
+
 /**
  * Retrieves canonical skill links for a project.
  *
@@ -2733,6 +2763,9 @@ export async function getProjectSkills(resumeId, projectId) {
   }
   return responseBody;
 }
+
+
+
 
 // =========================================================================
 // PHASE 3 | FEATURE 19: CERTIFICATIONS & ACHIEVEMENTS INTELLIGENCE
@@ -2769,6 +2802,9 @@ export async function extractCertifications(resumeId, { reprocess = false, force
   return responseBody;
 }
 
+
+
+
 /**
  * Retrieves candidate certifications for a resume.
  *
@@ -2791,6 +2827,9 @@ export async function getCertifications(resumeId) {
   }
   return responseBody;
 }
+
+
+
 
 /**
  * Retrieves aggregate certification analytics.
@@ -2815,6 +2854,9 @@ export async function getCertificationSummary(resumeId) {
   return responseBody;
 }
 
+
+
+
 /**
  * Retrieves certifications pending user review.
  *
@@ -2837,6 +2879,9 @@ export async function getPendingCertificationsReviews(resumeId) {
   }
   return responseBody;
 }
+
+
+
 
 /**
  * Retrieves details for a specific certification.
@@ -2862,6 +2907,9 @@ export async function getCertificationDetails(resumeId, certificationId) {
   return responseBody;
 }
 
+
+
+
 /**
  * Retrieves canonical skill links for a certification.
  *
@@ -2885,6 +2933,9 @@ export async function getCertificationSkills(resumeId, certificationId) {
   }
   return responseBody;
 }
+
+
+
 
 /**
  * Adds a new certification entry manually.
@@ -2913,6 +2964,9 @@ export async function addCertification(resumeId, certificationData) {
   }
   return responseBody;
 }
+
+
+
 
 /**
  * Updates an existing certification entry manually.
@@ -2943,6 +2997,9 @@ export async function updateCertification(resumeId, certificationId, patchData) 
   return responseBody;
 }
 
+
+
+
 /**
  * Confirms review status for a certification.
  *
@@ -2972,6 +3029,9 @@ export async function confirmCertification(resumeId, certificationId, notes = ''
   return responseBody;
 }
 
+
+
+
 /**
  * Deletes a certification record.
  *
@@ -2995,6 +3055,9 @@ export async function deleteCertification(resumeId, certificationId) {
   }
   return responseBody;
 }
+
+
+
 
 /**
  * Reprocesses certifications while preserving manual edits.
@@ -3021,6 +3084,9 @@ export async function reprocessCertifications(resumeId, { forceOverwrite = false
   }
   return responseBody;
 }
+
+
+
 
 // -------------------------------------------------------------------------
 // ACHIEVEMENTS OPERATIONS
@@ -3057,6 +3123,9 @@ export async function extractAchievements(resumeId, { reprocess = false, forceOv
   return responseBody;
 }
 
+
+
+
 /**
  * Retrieves candidate achievements for a resume.
  *
@@ -3079,6 +3148,9 @@ export async function getAchievements(resumeId) {
   }
   return responseBody;
 }
+
+
+
 
 /**
  * Retrieves aggregate achievement analytics.
@@ -3103,6 +3175,9 @@ export async function getAchievementSummary(resumeId) {
   return responseBody;
 }
 
+
+
+
 /**
  * Retrieves achievements pending user review.
  *
@@ -3125,6 +3200,9 @@ export async function getPendingAchievementsReviews(resumeId) {
   }
   return responseBody;
 }
+
+
+
 
 /**
  * Retrieves details for a specific achievement.
@@ -3150,6 +3228,9 @@ export async function getAchievementDetails(resumeId, achievementId) {
   return responseBody;
 }
 
+
+
+
 /**
  * Retrieves canonical skill links for an achievement.
  *
@@ -3173,6 +3254,9 @@ export async function getAchievementSkills(resumeId, achievementId) {
   }
   return responseBody;
 }
+
+
+
 
 /**
  * Adds a new achievement entry manually.
@@ -3201,6 +3285,9 @@ export async function addAchievement(resumeId, achievementData) {
   }
   return responseBody;
 }
+
+
+
 
 /**
  * Updates an existing achievement entry manually.
@@ -3231,6 +3318,9 @@ export async function updateAchievement(resumeId, achievementId, patchData) {
   return responseBody;
 }
 
+
+
+
 /**
  * Confirms review status for an achievement.
  *
@@ -3260,6 +3350,9 @@ export async function confirmAchievement(resumeId, achievementId, notes = '') {
   return responseBody;
 }
 
+
+
+
 /**
  * Deletes an achievement record.
  *
@@ -3283,6 +3376,9 @@ export async function deleteAchievement(resumeId, achievementId) {
   }
   return responseBody;
 }
+
+
+
 
 /**
  * Reprocesses achievements while preserving manual edits.
@@ -3310,6 +3406,9 @@ export async function reprocessAchievements(resumeId, { forceOverwrite = false }
   return responseBody;
 }
 
+
+
+
 /**
  * Retrieves combined summary of certifications and achievements.
  *
@@ -3332,3 +3431,9 @@ export async function getCertificationsAchievementsSummary(resumeId) {
   }
   return responseBody;
 }
+
+export { getResumeQualityScore, analyzeResumeQualityScore } from './qualityScoreService.js';
+export { getResumeStrengths, analyzeResumeStrengths } from './strengthService.js';
+
+
+
