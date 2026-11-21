@@ -11,6 +11,7 @@ from app.models.certifications import Certification, Achievement
 from app.models.quality_score import ResumeQualityScore
 from app.models.strength_analysis import ResumeStrengthAnalysis
 from app.models.weakness_analysis import ResumeWeaknessAnalysis
+from app.models.ats_analysis import ResumeATSAnalysis
 
 __all__ = [
     "Base",
@@ -30,4 +31,5 @@ __all__ = [
     "ResumeQualityScore",
     "ResumeStrengthAnalysis",
     "ResumeWeaknessAnalysis",
+    "ResumeATSAnalysis",
 ]

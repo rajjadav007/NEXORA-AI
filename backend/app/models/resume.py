@@ -111,6 +111,12 @@ class Resume(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    ats_analysis = relationship(
+        "ResumeATSAnalysis",
+        back_populates="resume",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
 
 class ResumeVersion(Base):

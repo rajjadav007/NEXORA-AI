@@ -10,6 +10,7 @@ from app.api.v1.endpoints.certifications import router as certifications_router
 from app.api.v1.endpoints.quality_score import router as quality_score_router
 from app.api.v1.endpoints.strength_analysis import router as strength_analysis_router
 from app.api.v1.endpoints.weakness_analysis import router as weakness_analysis_router
+from app.api.v1.endpoints.ats_analysis import router as ats_analysis_router
 
 api_router = APIRouter()
 api_router.include_router(health_router)
@@ -24,3 +25,4 @@ api_router.include_router(certifications_router, prefix="/resumes", tags=["Certi
 api_router.include_router(quality_score_router, prefix="/resumes", tags=["Resume Quality Score"])
 api_router.include_router(strength_analysis_router, prefix="/resumes", tags=["Resume Strength Analysis"])
 api_router.include_router(weakness_analysis_router, prefix="/resumes", tags=["Resume Weakness Analysis"])
+api_router.include_router(ats_analysis_router, prefix="/resumes", tags=["Resume ATS Compatibility Analysis"])

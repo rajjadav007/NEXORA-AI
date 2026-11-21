@@ -29,6 +29,7 @@ import { SkillsSection } from './SkillsSection';
 import { ResumeQualityDashboard } from './ResumeQualityDashboard';
 import { ResumeStrengthDashboard } from './ResumeStrengthDashboard';
 import { ResumeWeaknessDashboard } from './ResumeWeaknessDashboard';
+import { ResumeATSDashboard } from './ResumeATSDashboard';
 import { formatFileSize } from '../../hooks/useResumeUpload';
 import { saveResume } from '../../services/resumeService';
 import { cn } from '../../utils/cn';
@@ -211,6 +212,9 @@ export function ResumePreview({
 
       {/* Resume Weakness Analysis (Phase 4 Feature #23) */}
       <ResumeWeaknessDashboard resumeId={resume_id} />
+
+      {/* Resume ATS Compatibility Analysis (Phase 4 Feature #24) */}
+      <ResumeATSDashboard resumeId={resume_id} />
 
       {/* Extracted Personal Information (Phase 3 Feature #13) */}
       <PersonalInfoCard resumeId={resume_id} />
