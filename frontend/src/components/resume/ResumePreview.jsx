@@ -32,6 +32,7 @@ import { ResumeWeaknessDashboard } from './ResumeWeaknessDashboard';
 import { ResumeATSDashboard } from './ResumeATSDashboard';
 import { ResumeGrammarDashboard } from './ResumeGrammarDashboard';
 import { ResumeAchievementDashboard } from './ResumeAchievementDashboard';
+import { ResumeRecommendationDashboard } from './ResumeRecommendationDashboard';
 import { formatFileSize } from '../../hooks/useResumeUpload';
 import { saveResume } from '../../services/resumeService';
 import { cn } from '../../utils/cn';
@@ -223,6 +224,9 @@ export function ResumePreview({
 
       {/* Resume Achievement Analysis (Phase 4 Feature #26) */}
       <ResumeAchievementDashboard resumeId={resume_id} />
+
+      {/* Resume Improvement Recommendations (Phase 4 Feature #27) */}
+      <ResumeRecommendationDashboard resumeId={resume_id} />
 
       {/* Extracted Personal Information (Phase 3 Feature #13) */}
       <PersonalInfoCard resumeId={resume_id} />

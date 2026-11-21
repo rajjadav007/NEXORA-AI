@@ -3438,6 +3438,11 @@ export { getResumeWeaknesses, analyzeResumeWeaknesses } from './weaknessService.
 export { getResumeATS, analyzeResumeATS } from './atsService.js';
 export { getResumeGrammar, analyzeResumeGrammar } from './grammarService.js';
 export { getResumeAchievements, analyzeResumeAchievements } from './achievementService.js';
+export {
+  getResumeRecommendations,
+  generateResumeRecommendations,
+  updateRecommendationStatus,
+} from './recommendationService.js';
 
 
 
