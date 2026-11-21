@@ -81,6 +81,18 @@ class Resume(Base):
         cascade="all, delete-orphan",
         order_by="Project.created_at",
     )
+    certifications = relationship(
+        "Certification",
+        back_populates="resume",
+        cascade="all, delete-orphan",
+        order_by="Certification.created_at",
+    )
+    achievements = relationship(
+        "Achievement",
+        back_populates="resume",
+        cascade="all, delete-orphan",
+        order_by="Achievement.created_at",
+    )
 
 
 class ResumeVersion(Base):

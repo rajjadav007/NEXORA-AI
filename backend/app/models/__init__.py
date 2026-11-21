@@ -7,6 +7,7 @@ from app.models.education import Education
 from app.models.experience import Experience
 from app.models.skills import Skill, SkillAlias, ResumeSkill
 from app.models.project import Project
+from app.models.certifications import Certification, Achievement
 
 __all__ = [
     "Base",
@@ -21,4 +22,6 @@ __all__ = [
     "SkillAlias",
     "ResumeSkill",
     "Project",
+    "Certification",
+    "Achievement",
 ]

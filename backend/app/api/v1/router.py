@@ -6,6 +6,7 @@ from app.api.v1.endpoints.education import router as education_router
 from app.api.v1.endpoints.experience import router as experience_router
 from app.api.v1.endpoints.skills import router as skills_router, dict_router as skills_dict_router
 from app.api.v1.endpoints.projects import router as projects_router
+from app.api.v1.endpoints.certifications import router as certifications_router
 
 api_router = APIRouter()
 api_router.include_router(health_router)
@@ -16,3 +17,4 @@ api_router.include_router(experience_router, prefix="/resumes", tags=["Experienc
 api_router.include_router(skills_router, prefix="/resumes", tags=["Skill Normalization"])
 api_router.include_router(skills_dict_router, prefix="/skills", tags=["Skill Dictionary"])
 api_router.include_router(projects_router, prefix="/resumes", tags=["Project Intelligence"])
+api_router.include_router(certifications_router, prefix="/resumes", tags=["Certifications & Achievements"])

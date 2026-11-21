@@ -24,6 +24,7 @@ import { PersonalInfoCard } from './PersonalInfoCard';
 import { EducationSection } from './EducationSection';
 import { ExperienceSection } from './ExperienceSection';
 import { ProjectsSection } from './ProjectsSection';
+import { CertificationsAchievementsSection } from './CertificationsAchievementsSection';
 import { SkillsSection } from './SkillsSection';
 import { formatFileSize } from '../../hooks/useResumeUpload';
 import { saveResume } from '../../services/resumeService';
@@ -210,6 +211,9 @@ export function ResumePreview({
 
       {/* Extracted Project Intelligence (Phase 3 Feature #18) */}
       <ProjectsSection resumeId={resume_id} />
+
+      {/* Extracted Certifications & Achievements (Phase 3 Feature #19) */}
+      <CertificationsAchievementsSection resumeId={resume_id} />
 
       {/* Normalized Skills Profile (Phase 3 Feature #17) */}
       <SkillsSection resumeId={resume_id} />

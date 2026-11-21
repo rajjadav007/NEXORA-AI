@@ -2733,3 +2733,602 @@ export async function getProjectSkills(resumeId, projectId) {
   }
   return responseBody;
 }
+
+// =========================================================================
+// PHASE 3 | FEATURE 19: CERTIFICATIONS & ACHIEVEMENTS INTELLIGENCE
+// =========================================================================
+
+/**
+ * Extracts and structures certifications from resume.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @param {object} [options]
+ * @param {boolean} [options.reprocess=false]
+ * @param {boolean} [options.forceOverwrite=false]
+ * @returns {Promise<object>}
+ */
+export async function extractCertifications(resumeId, { reprocess = false, forceOverwrite = false } = {}) {
+  const params = new URLSearchParams();
+  if (reprocess) params.append('reprocess', 'true');
+  if (forceOverwrite) params.append('force_overwrite', 'true');
+  const query = params.toString() ? `?${params.toString()}` : '';
+
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/certifications/extract${query}`;
+  const response = await fetch(url, { method: 'POST' });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to extract certifications with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Retrieves candidate certifications for a resume.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @returns {Promise<object>}
+ */
+export async function getCertifications(resumeId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/certifications`;
+  const response = await fetch(url);
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to fetch certifications with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Retrieves aggregate certification analytics.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @returns {Promise<object>}
+ */
+export async function getCertificationSummary(resumeId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/certifications/summary`;
+  const response = await fetch(url);
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to fetch certification summary with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Retrieves certifications pending user review.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @returns {Promise<object>}
+ */
+export async function getPendingCertificationsReviews(resumeId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/certifications/pending-reviews`;
+  const response = await fetch(url);
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to fetch pending certification reviews with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Retrieves details for a specific certification.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @param {string} certificationId - Certification identifier.
+ * @returns {Promise<object>}
+ */
+export async function getCertificationDetails(resumeId, certificationId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/certifications/${encodeURIComponent(certificationId)}`;
+  const response = await fetch(url);
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to fetch certification details with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Retrieves canonical skill links for a certification.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @param {string} certificationId - Certification identifier.
+ * @returns {Promise<Array>}
+ */
+export async function getCertificationSkills(resumeId, certificationId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/certifications/${encodeURIComponent(certificationId)}/skills`;
+  const response = await fetch(url);
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to fetch certification skills with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Adds a new certification entry manually.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @param {object} certificationData - Certification payload.
+ * @returns {Promise<object>}
+ */
+export async function addCertification(resumeId, certificationData) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/certifications`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(certificationData),
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to add certification with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Updates an existing certification entry manually.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @param {string} certificationId - Certification identifier.
+ * @param {object} patchData - Fields to update.
+ * @returns {Promise<object>}
+ */
+export async function updateCertification(resumeId, certificationId, patchData) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/certifications/${encodeURIComponent(certificationId)}`;
+  const response = await fetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patchData),
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to update certification with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Confirms review status for a certification.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @param {string} certificationId - Certification identifier.
+ * @param {string} [notes=''] - Review note.
+ * @returns {Promise<object>}
+ */
+export async function confirmCertification(resumeId, certificationId, notes = '') {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/certifications/${encodeURIComponent(certificationId)}/confirm`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ notes }),
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to confirm certification with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Deletes a certification record.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @param {string} certificationId - Certification identifier.
+ * @returns {Promise<object>}
+ */
+export async function deleteCertification(resumeId, certificationId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/certifications/${encodeURIComponent(certificationId)}`;
+  const response = await fetch(url, { method: 'DELETE' });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to delete certification with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Reprocesses certifications while preserving manual edits.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @param {object} [options]
+ * @param {boolean} [options.forceOverwrite=false]
+ * @returns {Promise<object>}
+ */
+export async function reprocessCertifications(resumeId, { forceOverwrite = false } = {}) {
+  const query = forceOverwrite ? '?force_overwrite=true' : '';
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/certifications/reprocess${query}`;
+  const response = await fetch(url, { method: 'POST' });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to reprocess certifications with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+// -------------------------------------------------------------------------
+// ACHIEVEMENTS OPERATIONS
+// -------------------------------------------------------------------------
+
+/**
+ * Extracts candidate accomplishments from resume.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @param {object} [options]
+ * @param {boolean} [options.reprocess=false]
+ * @param {boolean} [options.forceOverwrite=false]
+ * @returns {Promise<object>}
+ */
+export async function extractAchievements(resumeId, { reprocess = false, forceOverwrite = false } = {}) {
+  const params = new URLSearchParams();
+  if (reprocess) params.append('reprocess', 'true');
+  if (forceOverwrite) params.append('force_overwrite', 'true');
+  const query = params.toString() ? `?${params.toString()}` : '';
+
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/achievements/extract${query}`;
+  const response = await fetch(url, { method: 'POST' });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to extract achievements with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Retrieves candidate achievements for a resume.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @returns {Promise<object>}
+ */
+export async function getAchievements(resumeId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/achievements`;
+  const response = await fetch(url);
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to fetch achievements with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Retrieves aggregate achievement analytics.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @returns {Promise<object>}
+ */
+export async function getAchievementSummary(resumeId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/achievements/summary`;
+  const response = await fetch(url);
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to fetch achievement summary with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Retrieves achievements pending user review.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @returns {Promise<object>}
+ */
+export async function getPendingAchievementsReviews(resumeId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/achievements/pending-reviews`;
+  const response = await fetch(url);
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to fetch pending achievement reviews with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Retrieves details for a specific achievement.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @param {string} achievementId - Achievement identifier.
+ * @returns {Promise<object>}
+ */
+export async function getAchievementDetails(resumeId, achievementId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/achievements/${encodeURIComponent(achievementId)}`;
+  const response = await fetch(url);
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to fetch achievement details with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Retrieves canonical skill links for an achievement.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @param {string} achievementId - Achievement identifier.
+ * @returns {Promise<Array>}
+ */
+export async function getAchievementSkills(resumeId, achievementId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/achievements/${encodeURIComponent(achievementId)}/skills`;
+  const response = await fetch(url);
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to fetch achievement skills with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Adds a new achievement entry manually.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @param {object} achievementData - Achievement payload.
+ * @returns {Promise<object>}
+ */
+export async function addAchievement(resumeId, achievementData) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/achievements`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(achievementData),
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to add achievement with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Updates an existing achievement entry manually.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @param {string} achievementId - Achievement identifier.
+ * @param {object} patchData - Fields to update.
+ * @returns {Promise<object>}
+ */
+export async function updateAchievement(resumeId, achievementId, patchData) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/achievements/${encodeURIComponent(achievementId)}`;
+  const response = await fetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patchData),
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to update achievement with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Confirms review status for an achievement.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @param {string} achievementId - Achievement identifier.
+ * @param {string} [notes=''] - Review note.
+ * @returns {Promise<object>}
+ */
+export async function confirmAchievement(resumeId, achievementId, notes = '') {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/achievements/${encodeURIComponent(achievementId)}/confirm`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ notes }),
+  });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to confirm achievement with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Deletes an achievement record.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @param {string} achievementId - Achievement identifier.
+ * @returns {Promise<object>}
+ */
+export async function deleteAchievement(resumeId, achievementId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/achievements/${encodeURIComponent(achievementId)}`;
+  const response = await fetch(url, { method: 'DELETE' });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to delete achievement with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Reprocesses achievements while preserving manual edits.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @param {object} [options]
+ * @param {boolean} [options.forceOverwrite=false]
+ * @returns {Promise<object>}
+ */
+export async function reprocessAchievements(resumeId, { forceOverwrite = false } = {}) {
+  const query = forceOverwrite ? '?force_overwrite=true' : '';
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/achievements/reprocess${query}`;
+  const response = await fetch(url, { method: 'POST' });
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to reprocess achievements with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
+
+/**
+ * Retrieves combined summary of certifications and achievements.
+ *
+ * @param {string} resumeId - UUID or staging ID.
+ * @returns {Promise<object>}
+ */
+export async function getCertificationsAchievementsSummary(resumeId) {
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/certifications-achievements/summary`;
+  const response = await fetch(url);
+
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorMsg =
+      responseBody.error?.message ||
+      responseBody.detail ||
+      `Failed to fetch combined summary with status ${response.status}`;
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    throw err;
+  }
+  return responseBody;
+}
