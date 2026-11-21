@@ -12,6 +12,7 @@ from app.models.quality_score import ResumeQualityScore
 from app.models.strength_analysis import ResumeStrengthAnalysis
 from app.models.weakness_analysis import ResumeWeaknessAnalysis
 from app.models.ats_analysis import ResumeATSAnalysis
+from app.models.grammar_analysis import ResumeGrammarAnalysis
 
 __all__ = [
     "Base",
@@ -32,4 +33,5 @@ __all__ = [
     "ResumeStrengthAnalysis",
     "ResumeWeaknessAnalysis",
     "ResumeATSAnalysis",
+    "ResumeGrammarAnalysis",
 ]

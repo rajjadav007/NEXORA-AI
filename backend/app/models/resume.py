@@ -117,6 +117,12 @@ class Resume(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    grammar_analysis = relationship(
+        "ResumeGrammarAnalysis",
+        back_populates="resume",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
 
 class ResumeVersion(Base):
