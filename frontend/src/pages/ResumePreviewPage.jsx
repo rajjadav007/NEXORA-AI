@@ -6,22 +6,33 @@ import { getResumePreview } from '../services/resumeService';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Upload, ArrowLeft } from 'lucide-react';
+import { useResume } from '../context/ResumeContext';
 
 /**
  * ResumePreviewPage
  * Phase 2 | Feature 5: Task 1 (Resume Preview Page)
  */
 export function ResumePreviewPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const routeParams = useParams();
   const navigate = useNavigate();
+  const { activeResumeId, selectResume } = useResume();
 
-  // Support both query param `?id=uuid` and path param `/resume/:resumeId/preview`
-  const resumeId = searchParams.get('id') || routeParams.resumeId;
+  // Support both query param `?id=uuid`, path param, or active context resume ID
+  const urlResumeId = searchParams.get('id') || routeParams.resumeId;
+  const resumeId = urlResumeId || activeResumeId;
 
   const [previewData, setPreviewData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (urlResumeId && urlResumeId !== activeResumeId) {
+      selectResume(urlResumeId);
+    } else if (!urlResumeId && activeResumeId) {
+      setSearchParams({ id: activeResumeId }, { replace: true });
+    }
+  }, [urlResumeId, activeResumeId, selectResume, setSearchParams]);
 
   const fetchPreview = useCallback(async () => {
     if (!resumeId) return;
@@ -33,6 +44,7 @@ export function ResumePreviewPage() {
       const response = await getResumePreview(resumeId);
       if (response && response.data) {
         setPreviewData(response.data);
+        selectResume(resumeId, response.data);
       } else {
         throw new Error('Received invalid preview response from server.');
       }
@@ -41,7 +53,7 @@ export function ResumePreviewPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [resumeId]);
+  }, [resumeId, selectResume]);
 
   useEffect(() => {
     if (resumeId) {

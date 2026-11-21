@@ -6,10 +6,11 @@ Phase 3 | Feature 15: Experience Analysis
 import uuid
 import logging
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Header
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.security import verify_resume_access, validate_resume_id
 from app.database.session import get_db
 from app.models.resume import Resume
 from app.schemas.experience import (
@@ -28,23 +29,10 @@ router = APIRouter()
 
 
 def _validate_resume_id(resume_id: str) -> uuid.UUID:
-    """Security verification on resume identifier format."""
-    if not resume_id or ".." in resume_id or "/" in resume_id or "\\" in resume_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid resume identifier.",
-        )
-    try:
-        return uuid.UUID(resume_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid resume identifier format.",
-        )
+    return validate_resume_id(resume_id)
 
 
 def _validate_experience_id(experience_id: str) -> uuid.UUID:
-    """Security verification on experience identifier format."""
     try:
         return uuid.UUID(experience_id)
     except ValueError:
@@ -65,16 +53,11 @@ async def extract_experience(
     resume_id: str,
     reprocess: bool = Query(False, description="Whether to re-run extraction"),
     force_overwrite: bool = Query(False, description="Whether to overwrite manual edits on reprocess"),
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> ExperienceListResponse:
-    parsed_uuid = _validate_resume_id(resume_id)
-
-    resume = db.execute(select(Resume).where(Resume.id == parsed_uuid)).scalar_one_or_none()
-    if not resume and resume_id not in experience_service._staging_cache:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Resume not found: {resume_id}",
-        )
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
 
     try:
         entries = await experience_service.extract_experience(
@@ -93,6 +76,8 @@ async def extract_experience(
             total=len(entries),
             extraction_status="completed",
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.error("Failed to extract experience for resume %s: %s", resume_id, exc)
         raise HTTPException(
@@ -110,16 +95,11 @@ async def extract_experience(
 )
 def get_experience(
     resume_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> ExperienceListResponse:
-    parsed_uuid = _validate_resume_id(resume_id)
-
-    resume = db.execute(select(Resume).where(Resume.id == parsed_uuid)).scalar_one_or_none()
-    if not resume and resume_id not in experience_service._staging_cache:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Resume not found: {resume_id}",
-        )
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
 
     entries = experience_service.get_experience(resume_id, db)
     summary = experience_service.get_experience_summary(resume_id, db)
@@ -145,16 +125,11 @@ async def reprocess_experience(
     resume_id: str,
     payload: Optional[dict] = None,
     force_overwrite: bool = Query(False, description="Whether to discard manual user edits"),
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> ExperienceListResponse:
-    parsed_uuid = _validate_resume_id(resume_id)
-
-    resume = db.execute(select(Resume).where(Resume.id == parsed_uuid)).scalar_one_or_none()
-    if not resume and resume_id not in experience_service._staging_cache:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Resume not found: {resume_id}",
-        )
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
 
     overwrite = force_overwrite
     if payload and isinstance(payload, dict):
@@ -177,6 +152,8 @@ async def reprocess_experience(
             total=len(entries),
             extraction_status="completed",
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.error("Failed to reprocess experience for resume %s: %s", resume_id, exc)
         raise HTTPException(
@@ -195,9 +172,11 @@ async def reprocess_experience(
 def add_experience(
     resume_id: str,
     payload: ExperienceCreateRequest,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> ExperienceSingleResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
 
     created = experience_service.add_experience_entry(resume_id, payload, db)
     if not created:
@@ -224,9 +203,11 @@ def update_experience(
     resume_id: str,
     experience_id: str,
     payload: ExperienceUpdateRequest,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> ExperienceSingleResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     _validate_experience_id(experience_id)
 
     updated = experience_service.update_experience_entry(resume_id, experience_id, payload, db)
@@ -252,9 +233,11 @@ def update_experience(
 def delete_experience(
     resume_id: str,
     experience_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ):
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     _validate_experience_id(experience_id)
 
     success = experience_service.delete_experience_entry(resume_id, experience_id, db)
@@ -279,9 +262,11 @@ def delete_experience(
 )
 def get_experience_summary(
     resume_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> ExperienceSummaryData:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     return experience_service.get_experience_summary(resume_id, db)
 
 
@@ -294,7 +279,9 @@ def get_experience_summary(
 )
 def get_career_progression(
     resume_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> CareerProgressionResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     return experience_service.get_career_progression(resume_id, db)

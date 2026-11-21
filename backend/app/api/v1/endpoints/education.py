@@ -6,10 +6,11 @@ Phase 3 | Feature 14: Education Analysis
 import uuid
 import logging
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Header
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.security import verify_resume_access, validate_resume_id
 from app.database.session import get_db
 from app.models.resume import Resume
 from app.schemas.education import (
@@ -26,19 +27,7 @@ router = APIRouter()
 
 
 def _validate_resume_id(resume_id: str) -> uuid.UUID:
-    """Security verification on resume identifier format."""
-    if not resume_id or ".." in resume_id or "/" in resume_id or "\\" in resume_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid resume identifier.",
-        )
-    try:
-        return uuid.UUID(resume_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid resume identifier format.",
-        )
+    return validate_resume_id(resume_id)
 
 
 def _validate_education_id(education_id: str) -> uuid.UUID:
@@ -62,16 +51,11 @@ async def extract_education(
     resume_id: str,
     reprocess: bool = Query(False, description="Whether to re-run extraction"),
     force_overwrite: bool = Query(False, description="Whether to overwrite manual edits on reprocess"),
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> EducationListResponse:
-    parsed_uuid = _validate_resume_id(resume_id)
-
-    resume = db.execute(select(Resume).where(Resume.id == parsed_uuid)).scalar_one_or_none()
-    if not resume and resume_id not in education_service._staging_cache:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Resume not found: {resume_id}",
-        )
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
 
     try:
         entries = await education_service.extract_education(
@@ -88,6 +72,8 @@ async def extract_education(
             total=len(entries),
             extraction_status="completed",
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.error("Failed to extract education for resume %s: %s", resume_id, exc)
         raise HTTPException(
@@ -105,16 +91,11 @@ async def extract_education(
 )
 def get_education(
     resume_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> EducationListResponse:
-    parsed_uuid = _validate_resume_id(resume_id)
-
-    resume = db.execute(select(Resume).where(Resume.id == parsed_uuid)).scalar_one_or_none()
-    if not resume and resume_id not in education_service._staging_cache:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Resume not found: {resume_id}",
-        )
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
 
     entries = education_service.get_education(resume_id, db)
     return EducationListResponse(
@@ -137,16 +118,11 @@ async def reprocess_education(
     resume_id: str,
     payload: Optional[dict] = None,
     force_overwrite: bool = Query(False, description="Whether to discard manual user edits"),
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> EducationListResponse:
-    parsed_uuid = _validate_resume_id(resume_id)
-
-    resume = db.execute(select(Resume).where(Resume.id == parsed_uuid)).scalar_one_or_none()
-    if not resume and resume_id not in education_service._staging_cache:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Resume not found: {resume_id}",
-        )
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
 
     # Support force_overwrite from json body or query param
     overwrite = force_overwrite
@@ -168,6 +144,8 @@ async def reprocess_education(
             total=len(entries),
             extraction_status="completed",
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.error("Failed to reprocess education for resume %s: %s", resume_id, exc)
         raise HTTPException(
@@ -186,9 +164,11 @@ async def reprocess_education(
 def add_education(
     resume_id: str,
     payload: EducationCreateRequest,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> EducationSingleResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
 
     created = education_service.add_education_entry(resume_id, payload, db)
     if not created:
@@ -215,9 +195,11 @@ def update_education(
     resume_id: str,
     education_id: str,
     payload: EducationUpdateRequest,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> EducationSingleResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     _validate_education_id(education_id)
 
     updated = education_service.update_education_entry(resume_id, education_id, payload, db)
@@ -243,9 +225,11 @@ def update_education(
 def delete_education(
     resume_id: str,
     education_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ):
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     _validate_education_id(education_id)
 
     success = education_service.delete_education_entry(resume_id, education_id, db)

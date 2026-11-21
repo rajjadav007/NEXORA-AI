@@ -6,9 +6,10 @@ Phase 3 | Feature 13: Personal Information Extraction
 import uuid
 import logging
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Header
 from sqlalchemy.orm import Session
 
+from app.core.security import verify_resume_access, validate_resume_id
 from app.database.session import get_db
 from app.schemas.personal_information import (
     PersonalInformationResponse,
@@ -22,13 +23,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def _validate_resume_id(resume_id: str) -> None:
-    """Security verification on resume identifier format."""
-    if not resume_id or ".." in resume_id or "/" in resume_id or "\\" in resume_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid resume identifier.",
-        )
+def _validate_resume_id(resume_id: str) -> uuid.UUID:
+    return validate_resume_id(resume_id)
 
 
 @router.post(
@@ -42,9 +38,11 @@ async def extract_personal_info(
     resume_id: str,
     reprocess: bool = Query(False, description="Whether to re-run extraction"),
     force_overwrite: bool = Query(False, description="Whether to overwrite manual edits on reprocess"),
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> PersonalInformationResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
 
     try:
         data = await personal_info_service.extract_personal_information(
@@ -59,6 +57,8 @@ async def extract_personal_info(
             message="Personal information extracted successfully",
             data=data,
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.error("Failed to extract personal information for resume %s: %s", resume_id, exc)
         raise HTTPException(
@@ -76,9 +76,11 @@ async def extract_personal_info(
 )
 def get_personal_info(
     resume_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> PersonalInformationResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
 
     data = personal_info_service.get_personal_information(resume_id, db)
     if not data:
@@ -104,9 +106,11 @@ def get_personal_info(
 def update_personal_info(
     resume_id: str,
     payload: PersonalInformationUpdateRequest,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> PersonalInformationResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
 
     updated_data = personal_info_service.update_personal_information(
         resume_id=resume_id,
@@ -137,9 +141,11 @@ def update_personal_info(
 async def reprocess_personal_info(
     resume_id: str,
     force_overwrite: bool = Query(False, description="Whether to discard manual user edits"),
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> PersonalInformationResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
 
     try:
         data = await personal_info_service.extract_personal_information(
@@ -154,6 +160,8 @@ async def reprocess_personal_info(
             message="Personal information reprocessed successfully",
             data=data,
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.error("Failed to reprocess personal info for %s: %s", resume_id, exc)
         raise HTTPException(

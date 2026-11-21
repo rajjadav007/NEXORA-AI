@@ -5,10 +5,15 @@ Phase 2 | Feature 5: Resume Preview
 
 import re
 import logging
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, List, Dict, Tuple
+from sqlalchemy.orm import Session
+from sqlalchemy import select
 
+from app.models.resume import Resume
+from app.services.permanent_storage import permanent_storage
 from app.schemas.preview import PreviewStatus, ResumePreviewData
 from app.schemas.extraction import ExtractionData, ContentBlock, ExtractionStatus
 from app.schemas.cleaning import CleaningData
@@ -115,13 +120,47 @@ class ResumePreviewService:
     def get_cached_cleaning(self, resume_id: str) -> Optional[CleaningData]:
         return self._cleaning_cache.get(resume_id)
 
-    def get_preview(self, resume_id: str) -> ResumePreviewData:
+    def get_preview(self, resume_id: str, db: Optional[Session] = None) -> ResumePreviewData:
         """
-        Retrieves or compiles preview data for a staged resume.
+        Retrieves or compiles preview data for a staged or permanently stored resume.
         Reuses cached Feature 3 and Feature 4 outputs whenever available.
         """
         staged_path = staging_service.get_staged_path(resume_id)
         if not staged_path or not staged_path.exists():
+            # Check permanent storage / DB fallback
+            if db:
+                try:
+                    uid = uuid.UUID(resume_id)
+                    stored_resume = db.execute(select(Resume).where(Resume.id == uid)).scalar_one_or_none()
+                    if stored_resume and stored_resume.versions:
+                        latest = stored_resume.versions[0]
+                        perm_file = permanent_storage.get_storage_path(stored_resume.storage_key)
+                        file_available = perm_file.exists() if perm_file else False
+                        cleaned_txt = latest.cleaned_text or ""
+                        raw_txt = latest.extracted_text or ""
+                        blocks = parse_structured_blocks(cleaned_txt)
+                        return ResumePreviewData(
+                            resume_id=resume_id,
+                            original_filename=stored_resume.original_filename,
+                            file_type=stored_resume.file_type,
+                            file_size=stored_resume.file_size,
+                            preview_status=PreviewStatus.READY if cleaned_txt.strip() else PreviewStatus.EMPTY,
+                            cleaned_text=cleaned_txt,
+                            raw_text=raw_txt,
+                            blocks=blocks,
+                            character_count=len(cleaned_txt),
+                            word_count=len(cleaned_txt.split()) if cleaned_txt else 0,
+                            page_count=1,
+                            cleaning_actions=["normalized_whitespace", "cleaned_formatting"],
+                            extraction_method="permanent_record",
+                            extracted_at=latest.created_at.isoformat() if latest.created_at else "",
+                            cleaned_at=latest.created_at.isoformat() if latest.created_at else "",
+                            file_available=file_available,
+                            file_download_url=f"/api/v1/resumes/{resume_id}/file?download=true",
+                            file_view_url=f"/api/v1/resumes/{resume_id}/file",
+                        )
+                except Exception as exc:
+                    logger.warning("Failed retrieving stored resume preview for %s: %s", resume_id, exc)
             raise FileNotFoundError(f"Staged resume not found or expired for ID: {resume_id}")
 
         filename = staged_path.name

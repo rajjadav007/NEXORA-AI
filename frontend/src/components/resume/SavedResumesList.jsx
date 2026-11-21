@@ -11,6 +11,7 @@ import {
   Layers,
   ShieldCheck,
   Upload,
+  CheckCircle,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';
@@ -24,9 +25,11 @@ import {
 } from '../../services/resumeService';
 import { formatFileSize } from '../../hooks/useResumeUpload';
 import { cn } from '../../utils/cn';
+import { useResume } from '../../context/ResumeContext';
 
 export function SavedResumesList({ onUploadNew, className }) {
   const navigate = useNavigate();
+  const { activeResumeId, selectResume, clearActiveResume } = useResume();
   const [resumes, setResumes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -58,6 +61,9 @@ export function SavedResumesList({ onUploadNew, className }) {
     try {
       await deleteStoredResume(id);
       setResumes((prev) => prev.filter((r) => r.id !== id));
+      if (id === activeResumeId) {
+        clearActiveResume();
+      }
     } catch (err) {
       alert(`Failed to delete resume: ${err.message}`);
     } finally {
@@ -165,6 +171,11 @@ export function SavedResumesList({ onUploadNew, className }) {
                         <p className="text-sm font-semibold text-slate-900 truncate" title={resume.original_filename}>
                           {resume.original_filename}
                         </p>
+                        {resume.id === activeResumeId && (
+                          <Badge className="text-[10px] bg-teal-100 text-teal-800 border-teal-300 font-medium">
+                            Active
+                          </Badge>
+                        )}
                         <Badge variant="outline" className="text-[10px] bg-slate-50 text-slate-700 font-mono">
                           v{resume.current_version || 1}
                         </Badge>
@@ -185,10 +196,23 @@ export function SavedResumesList({ onUploadNew, className }) {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                    {resume.id !== activeResumeId && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => selectResume(resume.id, resume)}
+                        className="text-xs h-8 text-teal-700 hover:text-teal-800 hover:bg-teal-50"
+                      >
+                        Set Active
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => navigate(`/resume/preview?id=${resume.id}`)}
+                      onClick={() => {
+                        selectResume(resume.id, resume);
+                        navigate(`/resume/preview?id=${resume.id}`);
+                      }}
                       className="text-xs h-8 flex items-center gap-1 border-slate-200 text-slate-700 hover:text-slate-900"
                     >
                       <Eye className="w-3.5 h-3.5" /> Preview

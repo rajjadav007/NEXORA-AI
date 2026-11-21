@@ -7,11 +7,12 @@ import uuid
 import logging
 from pathlib import Path
 from typing import Optional, List
-from fastapi import APIRouter, File, UploadFile, HTTPException, status, Depends
+from fastapi import APIRouter, File, UploadFile, HTTPException, status, Depends, Query, Header
 from fastapi.responses import JSONResponse, FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 
+from app.core.security import verify_resume_access, validate_resume_id
 from app.database.session import get_db
 from app.models.resume import Resume, ResumeVersion
 from app.models.user import User
@@ -50,16 +51,19 @@ router = APIRouter()
     "/upload",
     response_model=ResumeUploadResponse,
     status_code=status.HTTP_200_OK,
-    summary="Upload and validate a resume document",
-    description="Accepts PDF or DOCX resume documents, validates structure & integrity, and temporarily stages them.",
+    summary="Upload, validate, and persist a resume document",
+    description="Accepts PDF or DOCX resume documents, validates structure & integrity, stages them, and persists canonical resume record.",
 )
 async def upload_resume(
     file: UploadFile = File(..., description="Resume document (PDF or DOCX, max 10MB)"),
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
+    db: Session = Depends(get_db),
 ):
     """
     Accepts multipart/form-data upload with a 'file' parameter.
     Validates file extension, size, MIME type, signatures, and document integrity.
-    Stages the file securely and returns upload metadata.
+    Stages the file securely, creates persistent canonical resume record, and returns upload metadata.
     Automatically removes incomplete or invalid files.
     """
     if not file or not file.filename or not file.filename.strip():
@@ -95,11 +99,58 @@ async def upload_resume(
             client_content_type=file.content_type,
         )
 
+        # 3. Persist valid resume record to permanent storage & database
+        storage_key, _ = permanent_storage.persist_staged_file(
+            staged_path, upload_id, version=1
+        )
+
+        owner_uuid = None
+        effective_user_id = x_user_id or user_id
+        if effective_user_id:
+            try:
+                owner_uuid = uuid.UUID(str(effective_user_id).strip())
+            except ValueError:
+                pass
+
+        # Pre-extract and clean text for initial version record
+        raw_text = ""
+        cleaned_text = ""
+        try:
+            preview_data = preview_service.get_preview(upload_id)
+            raw_text = preview_data.raw_text or ""
+            cleaned_text = preview_data.cleaned_text or ""
+        except Exception:
+            pass
+
+        parsed_uuid = uuid.UUID(upload_id)
+        new_resume = Resume(
+            id=parsed_uuid,
+            user_id=owner_uuid,
+            original_filename=metadata.original_filename,
+            storage_key=storage_key,
+            file_type=val_result.file_type or Path(metadata.original_filename).suffix.lstrip(".").lower() or "pdf",
+            file_size=metadata.file_size,
+            processing_status="COMPLETED",
+        )
+        db.add(new_resume)
+        db.flush()
+
+        version_record = ResumeVersion(
+            resume_id=new_resume.id,
+            version_number=1,
+            storage_key=storage_key,
+            extracted_text=raw_text,
+            cleaned_text=cleaned_text,
+        )
+        db.add(version_record)
+        db.commit()
+        db.refresh(new_resume)
+
         return ResumeUploadResponse(
             success=True,
             message="Resume uploaded successfully",
             data=ResumeUploadData(
-                upload_id=upload_id,
+                upload_id=str(new_resume.id),
                 original_filename=metadata.original_filename,
                 file_size=metadata.file_size,
                 content_type=metadata.content_type,
@@ -308,28 +359,21 @@ async def clean_resume(
     summary="Get resume preview data",
     description="Returns cleaned resume text, structured blocks, file metadata, and preview status.",
 )
-async def get_resume_preview(resume_id: str) -> ResumePreviewResponse:
+async def get_resume_preview(
+    resume_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
+    db: Session = Depends(get_db),
+) -> ResumePreviewResponse:
     """
-    Retrieves or compiles preview data for a staged resume document.
+    Retrieves or compiles preview data for a staged or permanently stored resume document.
     Reuses existing Feature 3 extraction and Feature 4 cleaning outputs,
     preventing unnecessary duplicate extraction or cleaning operations.
     """
-    # Security validation on resume_id format
-    if not resume_id or ".." in resume_id or "/" in resume_id or "\\" in resume_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid resume identifier.",
-        )
-
-    staged_path = staging_service.get_staged_path(resume_id)
-    if not staged_path or not staged_path.exists():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Resume file not found or staging expired for ID: {resume_id}",
-        )
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id, allow_non_uuid=True)
 
     try:
-        preview_data = preview_service.get_preview(resume_id)
+        preview_data = preview_service.get_preview(resume_id, db=db)
         return ResumePreviewResponse(
             success=True,
             message="Resume preview loaded successfully",
@@ -340,6 +384,8 @@ async def get_resume_preview(resume_id: str) -> ResumePreviewResponse:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(fnf),
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.error("Failed to load resume preview for %s: %s", resume_id, exc)
         raise HTTPException(
@@ -442,6 +488,11 @@ def save_resume(
         try:
             uid = uuid.UUID(payload.user_id)
             user_record = db.execute(select(User).where(User.id == uid)).scalar_one_or_none()
+            if not user_record:
+                email = payload.user_email.strip().lower() if payload.user_email else f"user_{str(uid)[:8]}@example.com"
+                user_record = User(id=uid, email=email)
+                db.add(user_record)
+                db.flush()
         except ValueError:
             pass
     elif payload and payload.user_email:
@@ -466,6 +517,20 @@ def save_resume(
     ).scalar_one_or_none()
 
     if existing_resume:
+        # If user record was resolved, update ownership
+        if user_record:
+            existing_resume.user_id = user_record.id
+
+        # If freshly auto-persisted at upload and has 1 version, update user association and return version 1
+        if len(existing_resume.versions) == 1 and existing_resume.storage_key:
+            db.commit()
+            db.refresh(existing_resume)
+            return SaveResumeResponse(
+                success=True,
+                message="Resume saved successfully",
+                data=_to_stored_resume_data(existing_resume),
+            )
+
         version_num = (
             max([v.version_number for v in existing_resume.versions], default=0) + 1
         )
@@ -535,22 +600,11 @@ def save_resume(
 )
 def get_stored_resume(
     resume_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> StoredResumeDetailResponse:
-    try:
-        uid = uuid.UUID(resume_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid resume identifier format.",
-        )
-
-    resume = db.execute(select(Resume).where(Resume.id == uid)).scalar_one_or_none()
-    if not resume:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Stored resume not found for ID: {resume_id}",
-        )
+    resume = verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id, allow_staging=False)
 
     return StoredResumeDetailResponse(
         success=True,
@@ -566,22 +620,12 @@ def get_stored_resume(
 )
 def delete_stored_resume(
     resume_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ):
-    try:
-        uid = uuid.UUID(resume_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid resume identifier format.",
-        )
-
-    resume = db.execute(select(Resume).where(Resume.id == uid)).scalar_one_or_none()
-    if not resume:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Stored resume not found for ID: {resume_id}",
-        )
+    resume = verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id, allow_staging=False)
+    uid = resume.id
 
     # Delete DB records
     db.delete(resume)
@@ -589,6 +633,9 @@ def delete_stored_resume(
 
     # Delete permanent storage files
     permanent_storage.delete_resume_files(str(uid))
+
+    # Delete lingering staging file if any
+    staging_service.cleanup_file(str(uid))
 
     return {
         "success": True,
@@ -604,6 +651,8 @@ def delete_stored_resume(
 async def get_resume_file(
     resume_id: str,
     download: bool = False,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ):
     """
@@ -611,11 +660,14 @@ async def get_resume_file(
     Checks permanent storage first; falls back to staging if un-saved.
     Never exposes internal server filesystem paths to the client.
     """
-    if not resume_id or ".." in resume_id or "/" in resume_id or "\\" in resume_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid resume identifier.",
-        )
+    verify_resume_access(
+        resume_id,
+        db,
+        user_id=user_id,
+        x_user_id=x_user_id,
+        allow_staging=True,
+        allow_non_uuid=True,
+    )
 
     file_path = None
     original_filename = "resume"

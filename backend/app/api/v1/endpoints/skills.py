@@ -6,10 +6,11 @@ Phase 3 | Feature 17: Skill Normalization
 import uuid
 import logging
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Header
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.security import verify_resume_access, validate_resume_id
 from app.database.session import get_db
 from app.models.resume import Resume
 from app.schemas.skills import (
@@ -33,19 +34,7 @@ router = APIRouter()
 
 
 def _validate_resume_id(resume_id: str) -> uuid.UUID:
-    """Security verification on resume identifier format."""
-    if not resume_id or ".." in resume_id or "/" in resume_id or "\\" in resume_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid resume identifier.",
-        )
-    try:
-        return uuid.UUID(resume_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid resume identifier format.",
-        )
+    return validate_resume_id(resume_id)
 
 
 # --- Resume-Scoped Skill Endpoints ---
@@ -61,15 +50,11 @@ async def extract_and_normalize_skills(
     resume_id: str,
     reprocess: bool = Query(False, description="Whether to re-run extraction"),
     force_overwrite: bool = Query(False, description="Whether to overwrite manual edits on reprocess"),
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> SkillListResponse:
-    parsed_uuid = _validate_resume_id(resume_id)
-    resume = db.execute(select(Resume).where(Resume.id == parsed_uuid)).scalar_one_or_none()
-    if not resume and resume_id not in skill_normalization_service._staging_cache:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Resume not found: {resume_id}",
-        )
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
 
     try:
         skills = await skill_normalization_service.extract_and_normalize_skills(
@@ -105,9 +90,11 @@ async def extract_and_normalize_skills(
 async def normalize_raw_skills(
     resume_id: str,
     payload: SkillNormalizeRequest,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> SkillListResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     try:
         skills = await skill_normalization_service.normalize_skill_list(
             raw_skills=payload.skills,
@@ -120,6 +107,8 @@ async def normalize_raw_skills(
             total=len(skills),
             extraction_status="completed",
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.error("Failed normalizing raw skill list: %s", exc)
         raise HTTPException(
@@ -137,15 +126,11 @@ async def normalize_raw_skills(
 )
 def get_normalized_skills(
     resume_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> SkillListResponse:
-    parsed_uuid = _validate_resume_id(resume_id)
-    resume = db.execute(select(Resume).where(Resume.id == parsed_uuid)).scalar_one_or_none()
-    if not resume and resume_id not in skill_normalization_service._staging_cache:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Resume not found: {resume_id}",
-        )
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
 
     skills = skill_normalization_service.get_normalized_skills(resume_id, db)
     summary = skill_normalization_service.get_normalization_summary(resume_id, db)
@@ -169,12 +154,16 @@ def get_normalized_skills(
 async def reprocess_skills(
     resume_id: str,
     force_overwrite: bool = Query(False, description="Whether to overwrite manual edits"),
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> SkillListResponse:
     return await extract_and_normalize_skills(
         resume_id=resume_id,
         reprocess=True,
         force_overwrite=force_overwrite,
+        user_id=user_id,
+        x_user_id=x_user_id,
         db=db,
     )
 
@@ -188,9 +177,11 @@ async def reprocess_skills(
 )
 def get_skills_summary(
     resume_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> SkillSummaryData:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     return skill_normalization_service.get_normalization_summary(resume_id, db)
 
 
@@ -203,9 +194,11 @@ def get_skills_summary(
 )
 def get_pending_reviews(
     resume_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> SkillListResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     pending = skill_normalization_service.get_pending_reviews(resume_id, db)
     return SkillListResponse(
         success=True,
@@ -227,9 +220,11 @@ def confirm_skill_mapping(
     resume_id: str,
     skill_id: str,
     payload: Optional[SkillConfirmRequest] = None,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> SkillSingleResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     override_name = payload.canonical_name if payload else None
     res = skill_normalization_service.confirm_mapping(
         resume_id=resume_id,
@@ -256,9 +251,11 @@ def reject_skill_mapping(
     resume_id: str,
     skill_id: str,
     payload: Optional[SkillRejectRequest] = None,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> SkillSingleResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     res = skill_normalization_service.reject_mapping(
         resume_id=resume_id,
         skill_id=skill_id,
@@ -283,9 +280,11 @@ def update_skill_entry(
     resume_id: str,
     skill_id: str,
     payload: SkillManualUpdateRequest,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> SkillSingleResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     res = skill_normalization_service.update_skill_manually(
         resume_id=resume_id,
         skill_id=skill_id,
@@ -309,9 +308,11 @@ def update_skill_entry(
 def delete_skill_entry(
     resume_id: str,
     skill_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ):
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     deleted = skill_normalization_service.delete_skill(resume_id, skill_id, db)
     if not deleted:
         raise HTTPException(

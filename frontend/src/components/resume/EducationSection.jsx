@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   GraduationCap,
   Building2,
@@ -54,6 +55,7 @@ function formatDegreeLevel(level) {
  * Phase 3 | Feature 14: Education Analysis
  */
 export function EducationSection({ resumeId, className }) {
+  const navigate = useNavigate();
   const [entries, setEntries] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -81,7 +83,12 @@ export function EducationSection({ resumeId, className }) {
   });
 
   const loadData = useCallback(async () => {
-    if (!resumeId) return;
+    if (!resumeId) {
+      setEntries([]);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
@@ -92,6 +99,7 @@ export function EducationSection({ resumeId, className }) {
       }
     } catch (err) {
       setError(err.message || 'Failed to load education records.');
+      setEntries([]);
     } finally {
       setIsLoading(false);
     }
@@ -293,16 +301,44 @@ export function EducationSection({ resumeId, className }) {
           </Alert>
         )}
 
-        {error && (
-          <Alert variant="destructive" className="mt-3 text-xs py-2">
-            <AlertCircle className="w-4 h-4 inline mr-1.5" />
-            {error}
-          </Alert>
-        )}
       </CardHeader>
 
       <div className="p-5">
-        {entries.length === 0 ? (
+        {!resumeId ? (
+          <div className="text-center py-8 space-y-2 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+            <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+              <GraduationCap className="w-5 h-5" />
+            </div>
+            <h4 className="text-sm font-semibold text-slate-800">No Resume Selected</h4>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+              Please select or upload a resume to view education & academic history.
+            </p>
+            <Button size="sm" onClick={() => navigate('/resume')} className="mt-4 text-xs">
+              Go to Resume Upload
+            </Button>
+          </div>
+        ) : error ? (
+          <div className="text-center py-8 space-y-3 bg-red-50/60 rounded-xl border border-dashed border-red-200 p-6">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-semibold text-red-900">Education Details Unavailable</h4>
+            <p className="text-xs text-red-700 max-w-md mx-auto leading-relaxed">{error}</p>
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadData()}
+                className="text-xs gap-1 bg-white border-red-200 text-red-800 hover:bg-red-50"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Try Again
+              </Button>
+              <Button size="sm" onClick={() => navigate('/resume')} className="text-xs">
+                Return to Resume Selection or Upload
+              </Button>
+            </div>
+          </div>
+        ) : entries.length === 0 ? (
           <div className="text-center py-8 space-y-2">
             <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
               <GraduationCap className="w-5 h-5" />

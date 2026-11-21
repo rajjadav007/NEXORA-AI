@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   FolderGit2,
   ExternalLink,
@@ -85,6 +86,7 @@ const EMPTY_FORM = {
 };
 
 export function ProjectsSection({ resumeId, className }) {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [summary, setSummary] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -102,7 +104,13 @@ export function ProjectsSection({ resumeId, className }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loadProjects = useCallback(async () => {
-    if (!resumeId) return;
+    if (!resumeId) {
+      setProjects([]);
+      setSummary(null);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
@@ -114,6 +122,8 @@ export function ProjectsSection({ resumeId, className }) {
       setSummary(res.summary || null);
     } catch (err) {
       setError(err.message || 'Failed to load projects.');
+      setProjects([]);
+      setSummary(null);
     } finally {
       setIsLoading(false);
     }
@@ -435,8 +445,40 @@ export function ProjectsSection({ resumeId, className }) {
           </Alert>
         )}
 
-        {/* Empty State */}
-        {filteredProjects.length === 0 ? (
+        {/* Empty State / Error State */}
+        {!resumeId ? (
+          <div className="p-8 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+            <FolderGit2 className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+            <h4 className="text-sm font-semibold text-slate-800">No Resume Selected</h4>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+              Please select or upload a resume to view project intelligence.
+            </p>
+            <Button size="sm" onClick={() => navigate('/resume')} className="mt-4 text-xs">
+              Go to Resume Upload
+            </Button>
+          </div>
+        ) : error ? (
+          <div className="p-8 text-center border border-dashed border-red-200 rounded-xl bg-red-50/60">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-semibold text-red-900">Project Intelligence Unavailable</h4>
+            <p className="text-xs text-red-700 max-w-md mx-auto mt-1 mb-4 leading-relaxed">{error}</p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadProjects()}
+                className="text-xs gap-1 bg-white border-red-200 text-red-800 hover:bg-red-50"
+              >
+                <RotateCw className="w-3.5 h-3.5" /> Try Again
+              </Button>
+              <Button size="sm" onClick={() => navigate('/resume')} className="text-xs">
+                Return to Resume Selection or Upload
+              </Button>
+            </div>
+          </div>
+        ) : filteredProjects.length === 0 ? (
           <div className="p-8 text-center border border-dashed border-slate-200 rounded-lg">
             <FolderGit2 className="w-10 h-10 text-slate-300 mx-auto mb-2" />
             <p className="text-sm font-semibold text-slate-700">No projects found</p>

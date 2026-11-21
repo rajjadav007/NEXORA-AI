@@ -1,5 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useResume } from '../../context/ResumeContext';
 import {
   FileText,
   Upload,
@@ -26,6 +27,7 @@ import { cn } from '../../utils/cn';
 
 export function ResumeUpload() {
   const navigate = useNavigate();
+  const { selectResume } = useResume();
   const {
     file,
     uploadProgress,
@@ -38,6 +40,12 @@ export function ResumeUpload() {
     startUpload,
     reset,
   } = useResumeUpload();
+
+  useEffect(() => {
+    if (status === 'success' && uploadResult?.upload_id) {
+      selectResume(uploadResult.upload_id, uploadResult);
+    }
+  }, [status, uploadResult, selectResume]);
 
   const [extractionData, setExtractionData] = useState(null);
   const [isExtracting, setIsExtracting] = useState(false);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   User,
   Mail,
@@ -57,6 +58,7 @@ function formatConfidence(score) {
  * Phase 3 | Feature 13: Personal Information Extraction
  */
 export function PersonalInfoCard({ resumeId, className }) {
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -79,7 +81,12 @@ export function PersonalInfoCard({ resumeId, className }) {
   });
 
   const loadData = useCallback(async () => {
-    if (!resumeId) return;
+    if (!resumeId) {
+      setData(null);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
@@ -90,6 +97,7 @@ export function PersonalInfoCard({ resumeId, className }) {
       }
     } catch (err) {
       setError(err.message || 'Failed to load personal information.');
+      setData(null);
     } finally {
       setIsLoading(false);
     }
@@ -270,16 +278,44 @@ export function PersonalInfoCard({ resumeId, className }) {
           </Alert>
         )}
 
-        {error && (
-          <Alert variant="destructive" className="mt-3 text-xs py-2">
-            <AlertCircle className="w-4 h-4 inline mr-1.5" />
-            {error}
-          </Alert>
-        )}
       </CardHeader>
 
       <div className="p-5">
-        {isEditing ? (
+        {!resumeId ? (
+          <div className="text-center py-8 space-y-2 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+            <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+              <User className="w-5 h-5" />
+            </div>
+            <h4 className="text-sm font-semibold text-slate-800">No Resume Selected</h4>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+              Please select or upload a resume to view personal contact details.
+            </p>
+            <Button size="sm" onClick={() => navigate('/resume')} className="mt-4 text-xs">
+              Go to Resume Upload
+            </Button>
+          </div>
+        ) : error ? (
+          <div className="text-center py-8 space-y-3 bg-red-50/60 rounded-xl border border-dashed border-red-200 p-6">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-semibold text-red-900">Personal Information Unavailable</h4>
+            <p className="text-xs text-red-700 max-w-md mx-auto leading-relaxed">{error}</p>
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadData()}
+                className="text-xs gap-1 bg-white border-red-200 text-red-800 hover:bg-red-50"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Try Again
+              </Button>
+              <Button size="sm" onClick={() => navigate('/resume')} className="text-xs">
+                Return to Resume Selection or Upload
+              </Button>
+            </div>
+          </div>
+        ) : isEditing ? (
           /* Inline Edit Form */
           <form onSubmit={handleSaveEdit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

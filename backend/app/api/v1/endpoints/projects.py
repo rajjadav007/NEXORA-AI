@@ -6,12 +6,13 @@ Phase 3 | Feature 18: Project Intelligence
 import uuid
 import logging
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Header
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
 from app.models.resume import Resume
+from app.core.security import verify_resume_access, validate_resume_id
 from app.schemas.projects import (
     ProjectListResponse,
     ProjectSingleResponse,
@@ -29,19 +30,7 @@ router = APIRouter()
 
 
 def _validate_resume_id(resume_id: str) -> uuid.UUID:
-    """Security verification on resume identifier format."""
-    if not resume_id or ".." in resume_id or "/" in resume_id or "\\" in resume_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid resume identifier.",
-        )
-    try:
-        return uuid.UUID(resume_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid resume identifier format.",
-        )
+    return validate_resume_id(resume_id)
 
 
 @router.post(
@@ -55,15 +44,11 @@ async def extract_projects(
     resume_id: str,
     reprocess: bool = Query(False, description="Whether to re-run extraction"),
     force_overwrite: bool = Query(False, description="Whether to overwrite manual edits on reprocess"),
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> ProjectListResponse:
-    parsed_uuid = _validate_resume_id(resume_id)
-    resume = db.execute(select(Resume).where(Resume.id == parsed_uuid)).scalar_one_or_none()
-    if not resume and resume_id not in project_intelligence_service._staging_cache:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Resume not found: {resume_id}",
-        )
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
 
     try:
         projects = await project_intelligence_service.extract_and_structure_projects(
@@ -98,15 +83,11 @@ async def extract_projects(
 )
 def get_projects(
     resume_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> ProjectListResponse:
-    parsed_uuid = _validate_resume_id(resume_id)
-    resume = db.execute(select(Resume).where(Resume.id == parsed_uuid)).scalar_one_or_none()
-    if not resume and resume_id not in project_intelligence_service._staging_cache:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Resume not found: {resume_id}",
-        )
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
 
     projects = project_intelligence_service.get_projects(resume_id, db)
     summary = project_intelligence_service.get_project_summary(resume_id, db)
@@ -129,9 +110,11 @@ def get_projects(
 )
 def get_project_summary(
     resume_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> ProjectSummaryData:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     return project_intelligence_service.get_project_summary(resume_id, db)
 
 
@@ -144,9 +127,11 @@ def get_project_summary(
 )
 def get_pending_reviews(
     resume_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> ProjectListResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     projects = project_intelligence_service.get_projects(resume_id, db)
     pending = [p for p in projects if p.review_status == "pending" or p.review_status == "needs_review"]
     return ProjectListResponse(
@@ -167,9 +152,11 @@ def get_pending_reviews(
 def get_project_by_id(
     resume_id: str,
     project_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> ProjectSingleResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     project = project_intelligence_service.get_project_by_id(resume_id, project_id, db)
     if not project:
         raise HTTPException(
@@ -188,9 +175,11 @@ def get_project_by_id(
 def get_project_skills(
     resume_id: str,
     project_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> List[ProjectSkillLinkData]:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     project = project_intelligence_service.get_project_by_id(resume_id, project_id, db)
     if not project:
         raise HTTPException(
@@ -209,9 +198,11 @@ def get_project_skills(
 def add_project(
     resume_id: str,
     payload: ProjectCreateRequest,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> ProjectSingleResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     entry = project_intelligence_service.add_project_manually(resume_id, payload, db)
     return ProjectSingleResponse(success=True, message="Project created successfully", data=entry)
 
@@ -226,9 +217,11 @@ def update_project(
     resume_id: str,
     project_id: str,
     payload: ProjectUpdateRequest,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> ProjectSingleResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     updated = project_intelligence_service.update_project_manually(resume_id, project_id, payload, db)
     if not updated:
         raise HTTPException(
@@ -248,9 +241,11 @@ def confirm_project(
     resume_id: str,
     project_id: str,
     payload: Optional[ProjectConfirmRequest] = None,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> ProjectSingleResponse:
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     confirmed = project_intelligence_service.confirm_project(resume_id, project_id, db)
     if not confirmed:
         raise HTTPException(
@@ -268,9 +263,11 @@ def confirm_project(
 def delete_project(
     resume_id: str,
     project_id: str,
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ):
-    _validate_resume_id(resume_id)
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
     deleted = project_intelligence_service.delete_project(resume_id, project_id, db)
     if not deleted:
         raise HTTPException(
@@ -290,11 +287,15 @@ def delete_project(
 async def reprocess_projects(
     resume_id: str,
     force_overwrite: bool = Query(False, description="Whether to overwrite manual edits"),
+    user_id: Optional[str] = Query(None),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> ProjectListResponse:
     return await extract_projects(
         resume_id=resume_id,
         reprocess=True,
         force_overwrite=force_overwrite,
+        user_id=user_id,
+        x_user_id=x_user_id,
         db=db,
     )

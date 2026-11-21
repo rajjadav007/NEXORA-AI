@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Code2,
   Tag,
@@ -46,6 +47,7 @@ const CATEGORIES = [
 ];
 
 export function SkillsSection({ resumeId, className }) {
+  const navigate = useNavigate();
   const [skills, setSkills] = useState([]);
   const [summary, setSummary] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,7 +62,13 @@ export function SkillsSection({ resumeId, className }) {
   const [editForm, setEditForm] = useState({ canonical_name: '', category: '', skill_type: 'technical' });
 
   const loadSkills = useCallback(async () => {
-    if (!resumeId) return;
+    if (!resumeId) {
+      setSkills([]);
+      setSummary(null);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
@@ -72,6 +80,8 @@ export function SkillsSection({ resumeId, className }) {
       setSummary(res.summary || null);
     } catch (err) {
       setError(err.message || 'Failed to load skills.');
+      setSkills([]);
+      setSummary(null);
     } finally {
       setIsLoading(false);
     }
@@ -327,7 +337,39 @@ export function SkillsSection({ resumeId, className }) {
 
       {/* Skills Grid */}
       <div className="p-4 sm:p-6">
-        {filteredSkills.length === 0 ? (
+        {!resumeId ? (
+          <div className="text-center py-8 space-y-2 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+            <Code2 className="w-8 h-8 mx-auto text-slate-300" />
+            <h4 className="text-sm font-semibold text-slate-800">No Resume Selected</h4>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+              Please select or upload a resume to view normalized skills.
+            </p>
+            <Button size="sm" onClick={() => navigate('/resume')} className="mt-4 text-xs">
+              Go to Resume Upload
+            </Button>
+          </div>
+        ) : error ? (
+          <div className="text-center py-8 space-y-3 bg-red-50/60 rounded-xl border border-dashed border-red-200 p-6">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-semibold text-red-900">Skills Profile Unavailable</h4>
+            <p className="text-xs text-red-700 max-w-md mx-auto leading-relaxed">{error}</p>
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadSkills()}
+                className="text-xs gap-1 bg-white border-red-200 text-red-800 hover:bg-red-50"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Try Again
+              </Button>
+              <Button size="sm" onClick={() => navigate('/resume')} className="text-xs">
+                Return to Resume Selection or Upload
+              </Button>
+            </div>
+          </div>
+        ) : filteredSkills.length === 0 ? (
           <div className="text-center py-8 text-slate-500 space-y-2">
             <Code2 className="w-8 h-8 mx-auto text-slate-300" />
             <p className="text-xs">No skills found for this category.</p>

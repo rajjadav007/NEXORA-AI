@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.database.session import get_db
 from app.models.resume import Resume
+from app.core.security import verify_resume_access, validate_resume_id
 from app.schemas.certifications import (
     CertificationListResponse,
     CertificationSingleResponse,
@@ -36,34 +37,17 @@ router = APIRouter()
 
 
 def _validate_resume_id(resume_id: str) -> uuid.UUID:
-    """Security verification on resume identifier format."""
-    if not resume_id or ".." in resume_id or "/" in resume_id or "\\" in resume_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid resume identifier.",
-        )
-    try:
-        return uuid.UUID(resume_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid resume identifier format.",
-        )
+    return validate_resume_id(resume_id)
 
 
-def _check_resume_exists(resume_id: str, db: Session) -> uuid.UUID:
-    parsed = _validate_resume_id(resume_id)
-    resume = db.execute(select(Resume).where(Resume.id == parsed)).scalar_one_or_none()
-    in_staging = (
-        resume_id in certifications_achievements_service._staging_certifications
-        or resume_id in certifications_achievements_service._staging_achievements
-    )
-    if not resume and not in_staging:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Resume not found: {resume_id}",
-        )
-    return parsed
+def _check_resume_exists(
+    resume_id: str,
+    db: Session,
+    user_id: Optional[str] = None,
+    x_user_id: Optional[str] = None,
+) -> uuid.UUID:
+    resume = verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
+    return resume.id
 
 
 # =========================================================================

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Award,
   Medal,
@@ -111,6 +112,7 @@ const EMPTY_ACHIEVE_FORM = {
 };
 
 export function CertificationsAchievementsSection({ resumeId, className }) {
+  const navigate = useNavigate();
   const [certifications, setCertifications] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [projects, setProjects] = useState([]);
@@ -133,7 +135,14 @@ export function CertificationsAchievementsSection({ resumeId, className }) {
   const [deleteTarget, setDeleteTarget] = useState(null); // { type: 'cert' | 'achieve', id: string, name: string }
 
   const loadData = useCallback(async (autoExtract = true) => {
-    if (!resumeId) return;
+    if (!resumeId) {
+      setCertifications([]);
+      setAchievements([]);
+      setProjects([]);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
@@ -176,6 +185,8 @@ export function CertificationsAchievementsSection({ resumeId, className }) {
       setAchievements(achieveList);
     } catch (err) {
       setError(err.message || 'Failed to load certifications and achievements.');
+      setCertifications([]);
+      setAchievements([]);
     } finally {
       setIsLoading(false);
     }
@@ -480,14 +491,39 @@ export function CertificationsAchievementsSection({ resumeId, className }) {
 
       {/* Main Content Area */}
       <div className="p-6">
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertTriangle className="w-4 h-4 mr-2" />
-            <p className="text-xs">{error}</p>
-          </Alert>
-        )}
-
-        {isLoading ? (
+        {!resumeId ? (
+          <div className="py-12 text-center space-y-2 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+            <Scroll className="w-8 h-8 mx-auto text-slate-400" />
+            <h4 className="text-sm font-bold text-slate-700">No Resume Selected</h4>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              Please select or upload a resume to view certifications & achievements.
+            </p>
+            <Button size="sm" onClick={() => navigate('/resume')} className="mt-4 text-xs">
+              Go to Resume Upload
+            </Button>
+          </div>
+        ) : error ? (
+          <div className="py-10 text-center space-y-3 border border-dashed border-red-200 rounded-xl bg-red-50/60 p-6">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-semibold text-red-900">Accomplishments Unavailable</h4>
+            <p className="text-xs text-red-700 max-w-md mx-auto leading-relaxed">{error}</p>
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadData()}
+                className="text-xs gap-1 bg-white border-red-200 text-red-800 hover:bg-red-50"
+              >
+                <RotateCw className="w-3.5 h-3.5" /> Try Again
+              </Button>
+              <Button size="sm" onClick={() => navigate('/resume')} className="text-xs">
+                Return to Resume Selection or Upload
+              </Button>
+            </div>
+          </div>
+        ) : isLoading ? (
           <div className="py-12 text-center space-y-3">
             <LoadingIndicator size="md" className="mx-auto text-primary" />
             <p className="text-xs text-slate-500 font-medium">Extracting and analyzing certifications & achievements...</p>

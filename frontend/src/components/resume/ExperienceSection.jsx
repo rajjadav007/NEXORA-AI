@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Briefcase,
   Building2,
@@ -72,6 +73,7 @@ function formatDuration(months) {
  * Phase 3 | Feature 15: Experience Analysis
  */
 export function ExperienceSection({ resumeId, className }) {
+  const navigate = useNavigate();
   const [entries, setEntries] = useState([]);
   const [summary, setSummary] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -99,7 +101,13 @@ export function ExperienceSection({ resumeId, className }) {
   });
 
   const loadData = useCallback(async () => {
-    if (!resumeId) return;
+    if (!resumeId) {
+      setEntries([]);
+      setSummary(null);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
@@ -112,6 +120,8 @@ export function ExperienceSection({ resumeId, className }) {
       }
     } catch (err) {
       setError(err.message || 'Failed to load experience records.');
+      setEntries([]);
+      setSummary(null);
     } finally {
       setIsLoading(false);
     }
@@ -309,15 +319,6 @@ export function ExperienceSection({ resumeId, className }) {
       </CardHeader>
 
       {/* Messages */}
-      {error && (
-        <div className="p-4 bg-red-50/60 border-b border-red-100">
-          <Alert variant="destructive" className="py-2 text-xs">
-            <AlertCircle className="w-4 h-4 mr-2" />
-            {error}
-          </Alert>
-        </div>
-      )}
-
       {successMessage && (
         <div className="p-3 bg-emerald-50 border-b border-emerald-100 text-xs text-emerald-800 flex items-center gap-2">
           <Check className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -326,7 +327,7 @@ export function ExperienceSection({ resumeId, className }) {
       )}
 
       {/* Summary Metrics Bar */}
-      {summary && summary.employment_count > 0 && (
+      {!error && summary && summary.employment_count > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-4 bg-slate-50/40 border-b border-slate-100">
           <div className="bg-white p-3 rounded-lg border border-slate-200/70 shadow-2xs">
             <div className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
@@ -374,7 +375,49 @@ export function ExperienceSection({ resumeId, className }) {
 
       {/* Main Content Area: Experience Timeline */}
       <div className="p-4 sm:p-6 space-y-5">
-        {entries.length === 0 ? (
+        {!resumeId ? (
+          <div className="text-center py-10 px-4 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+            <div className="w-12 h-12 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
+              <Briefcase className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-semibold text-slate-800">No Resume Selected</h4>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+              Please select or upload a resume to view professional experience.
+            </p>
+            <Button
+              size="sm"
+              onClick={() => navigate('/resume')}
+              className="mt-4 text-xs gap-1.5"
+            >
+              Go to Resume Upload
+            </Button>
+          </div>
+        ) : error ? (
+          <div className="text-center py-10 px-4 bg-red-50/60 rounded-xl border border-dashed border-red-200">
+            <div className="w-12 h-12 mx-auto rounded-full bg-red-100 flex items-center justify-center text-red-600 mb-3">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-semibold text-red-900">Experience Analysis Unavailable</h4>
+            <p className="text-xs text-red-700 max-w-md mx-auto mt-1 mb-4 leading-relaxed">{error}</p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadData()}
+                className="text-xs gap-1 bg-white border-red-200 text-red-800 hover:bg-red-50"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Try Again
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => navigate('/resume')}
+                className="text-xs gap-1"
+              >
+                Return to Resume Selection or Upload
+              </Button>
+            </div>
+          </div>
+        ) : entries.length === 0 ? (
           <div className="text-center py-10 px-4 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
             <div className="w-12 h-12 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
               <Briefcase className="w-6 h-6" />
