@@ -105,6 +105,12 @@ class Resume(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    weakness_analysis = relationship(
+        "ResumeWeaknessAnalysis",
+        back_populates="resume",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
 
 class ResumeVersion(Base):

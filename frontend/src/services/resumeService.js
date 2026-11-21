@@ -3434,6 +3434,8 @@ export async function getCertificationsAchievementsSummary(resumeId) {
 
 export { getResumeQualityScore, analyzeResumeQualityScore } from './qualityScoreService.js';
 export { getResumeStrengths, analyzeResumeStrengths } from './strengthService.js';
+export { getResumeWeaknesses, analyzeResumeWeaknesses } from './weaknessService.js';
+
 
 
 
