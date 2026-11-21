@@ -31,6 +31,7 @@ import { ResumeStrengthDashboard } from './ResumeStrengthDashboard';
 import { ResumeWeaknessDashboard } from './ResumeWeaknessDashboard';
 import { ResumeATSDashboard } from './ResumeATSDashboard';
 import { ResumeGrammarDashboard } from './ResumeGrammarDashboard';
+import { ResumeAchievementDashboard } from './ResumeAchievementDashboard';
 import { formatFileSize } from '../../hooks/useResumeUpload';
 import { saveResume } from '../../services/resumeService';
 import { cn } from '../../utils/cn';
@@ -219,6 +220,9 @@ export function ResumePreview({
 
       {/* Resume Grammar & Clarity Analysis (Phase 4 Feature #25) */}
       <ResumeGrammarDashboard resumeId={resume_id} />
+
+      {/* Resume Achievement Analysis (Phase 4 Feature #26) */}
+      <ResumeAchievementDashboard resumeId={resume_id} />
 
       {/* Extracted Personal Information (Phase 3 Feature #13) */}
       <PersonalInfoCard resumeId={resume_id} />

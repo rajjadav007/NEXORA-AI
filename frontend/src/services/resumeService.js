@@ -3437,6 +3437,8 @@ export { getResumeStrengths, analyzeResumeStrengths } from './strengthService.js
 export { getResumeWeaknesses, analyzeResumeWeaknesses } from './weaknessService.js';
 export { getResumeATS, analyzeResumeATS } from './atsService.js';
 export { getResumeGrammar, analyzeResumeGrammar } from './grammarService.js';
+export { getResumeAchievements, analyzeResumeAchievements } from './achievementService.js';
+
 
 
 

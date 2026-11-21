@@ -123,6 +123,12 @@ class Resume(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    achievement_analysis = relationship(
+        "ResumeAchievementAnalysis",
+        back_populates="resume",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
 
 class ResumeVersion(Base):

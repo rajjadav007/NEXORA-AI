@@ -1,0 +1,52 @@
+"""create_resume_achievement_analyses_table
+
+Revision ID: a7b8c9d0e1f2
+Revises: f6a7b8c9d0e1
+Create Date: 2026-11-21 08:00:00.000000
+
+"""
+from typing import Sequence, Union
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
+
+
+# revision identifiers, used by Alembic.
+revision: str = 'a7b8c9d0e1f2'
+down_revision: Union[str, None] = 'f6a7b8c9d0e1'
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    op.create_table(
+        'resume_achievement_analyses',
+        sa.Column('id', sa.Uuid(), nullable=False),
+        sa.Column('resume_id', sa.Uuid(), nullable=False),
+        sa.Column('user_id', sa.Uuid(), nullable=True),
+        sa.Column('achievement_score', sa.Integer(), nullable=False, server_default='70'),
+        sa.Column('score_grade', sa.String(length=35), nullable=False, server_default='Strong'),
+        sa.Column('executive_summary', sa.Text(), nullable=False, server_default=''),
+        sa.Column('total_achievements_count', sa.Integer(), nullable=False, server_default='0'),
+        sa.Column('quantified_count', sa.Integer(), nullable=False, server_default='0'),
+        sa.Column('unquantified_count', sa.Integer(), nullable=False, server_default='0'),
+        sa.Column('quantification_rate', sa.Float(), nullable=False, server_default='0.0'),
+        sa.Column('achievements', postgresql.JSONB(astext_type=sa.Text()), server_default='[]', nullable=False),
+        sa.Column('category_breakdown', postgresql.JSONB(astext_type=sa.Text()), server_default='{}', nullable=False),
+        sa.Column('rubric_breakdown', postgresql.JSONB(astext_type=sa.Text()), server_default='{}', nullable=False),
+        sa.Column('analysis_metadata', postgresql.JSONB(astext_type=sa.Text()), server_default='{}', nullable=False),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+        sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+        sa.ForeignKeyConstraint(['resume_id'], ['resumes.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='SET NULL'),
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('resume_id', name='uq_resume_achievement_analyses_resume_id')
+    )
+    op.create_index(op.f('ix_resume_achievement_analyses_resume_id'), 'resume_achievement_analyses', ['resume_id'], unique=True)
+    op.create_index(op.f('ix_resume_achievement_analyses_user_id'), 'resume_achievement_analyses', ['user_id'], unique=False)
+
+
+def downgrade() -> None:
+    op.drop_index(op.f('ix_resume_achievement_analyses_user_id'), table_name='resume_achievement_analyses')
+    op.drop_index(op.f('ix_resume_achievement_analyses_resume_id'), table_name='resume_achievement_analyses')
+    op.drop_table('resume_achievement_analyses')

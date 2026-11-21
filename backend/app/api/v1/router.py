@@ -12,6 +12,7 @@ from app.api.v1.endpoints.strength_analysis import router as strength_analysis_r
 from app.api.v1.endpoints.weakness_analysis import router as weakness_analysis_router
 from app.api.v1.endpoints.ats_analysis import router as ats_analysis_router
 from app.api.v1.endpoints.grammar_analysis import router as grammar_analysis_router
+from app.api.v1.endpoints.achievement_analysis import router as achievement_analysis_router
 
 api_router = APIRouter()
 api_router.include_router(health_router)
@@ -22,6 +23,8 @@ api_router.include_router(experience_router, prefix="/resumes", tags=["Experienc
 api_router.include_router(skills_router, prefix="/resumes", tags=["Skill Normalization"])
 api_router.include_router(skills_dict_router, prefix="/skills", tags=["Skill Dictionary"])
 api_router.include_router(projects_router, prefix="/resumes", tags=["Project Intelligence"])
+# Achievement analysis router must be included before certifications to avoid /{resume_id}/achievements/{achievement_id} shadowing /analysis
+api_router.include_router(achievement_analysis_router, prefix="/resumes", tags=["Resume Achievement Analysis"])
 api_router.include_router(certifications_router, prefix="/resumes", tags=["Certifications & Achievements"])
 api_router.include_router(quality_score_router, prefix="/resumes", tags=["Resume Quality Score"])
 api_router.include_router(strength_analysis_router, prefix="/resumes", tags=["Resume Strength Analysis"])
