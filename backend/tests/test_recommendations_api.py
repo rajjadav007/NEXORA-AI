@@ -86,14 +86,16 @@ def test_recommendations_api_lifecycle():
 
     first_rec = recs[0]
     required_keys = [
-        "id", "title", "category", "category_name", "explanation",
-        "reason", "evidence", "suggested_action", "priority",
-        "estimated_effort", "related_feature", "is_completed", "completed_at"
+        "id", "recommendation_id", "title", "category", "category_name",
+        "description", "explanation", "reason", "evidence", "suggested_action",
+        "priority", "estimated_effort", "related_feature", "is_completed",
+        "completion_status", "completed_at"
     ]
     for key in required_keys:
         assert key in first_rec, f"Missing key {key} in recommendation item"
 
     assert first_rec["is_completed"] is False
+    assert first_rec["completion_status"] == "Pending"
     assert first_rec["completed_at"] is None
     assert first_rec["priority"] in ["Critical", "High", "Medium", "Low"]
     assert first_rec["estimated_effort"] in ["Easy", "Medium", "Hard"]

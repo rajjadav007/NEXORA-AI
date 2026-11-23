@@ -158,9 +158,10 @@ class RecommendationService:
         target_item = None
 
         for item in recs:
-            if item.get("id") == recommendation_id:
+            if item.get("id") == recommendation_id or item.get("recommendation_id") == recommendation_id:
                 target_item = item
                 item["is_completed"] = bool(is_completed)
+                item["completion_status"] = "Completed" if is_completed else "Pending"
                 item["completed_at"] = datetime.utcnow().isoformat() if is_completed else None
                 break
 

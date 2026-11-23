@@ -5,7 +5,7 @@ Phase 4 | Feature 27: Resume Improvement Recommendations
 
 from datetime import datetime
 from typing import Optional, List, Dict, Any, Literal
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 RecommendationPriority = Literal["Critical", "High", "Medium", "Low"]
@@ -37,13 +37,29 @@ class RecommendationItemAI(BaseModel):
     """Raw recommendation item emitted by AI LLM or rule engine."""
     title: str = Field(..., description="Short, clear title for the recommendation")
     category: str = Field(..., description="Category key or name for recommendation")
-    explanation: str = Field(..., description="Detailed explanation of the problem or gap")
+    description: Optional[str] = Field(default="", description="Detailed description of the recommendation")
+    explanation: Optional[str] = Field(default="", description="Detailed explanation of the problem or gap")
     reason: str = Field(..., description="Why this recommendation matters for hiring managers and ATS")
     evidence: str = Field(default="", description="Supporting quote or resume evidence")
     suggested_action: str = Field(..., description="Specific actionable steps to improve the resume")
     priority: str = Field(default="Medium", description="Critical, High, Medium, or Low")
     estimated_effort: str = Field(default="Medium", description="Easy, Medium, or Hard")
     related_feature: str = Field(default="Feature #21-#26", description="Related analysis feature source")
+
+    @model_validator(mode="before")
+    @classmethod
+    def sync_desc_expl(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            desc = data.get("description")
+            expl = data.get("explanation")
+            if not desc and expl:
+                data["description"] = expl
+            elif not expl and desc:
+                data["explanation"] = desc
+            elif not desc and not expl:
+                data["description"] = data.get("title", "")
+                data["explanation"] = data.get("title", "")
+        return data
 
     @field_validator("evidence", mode="before")
     @classmethod
@@ -62,18 +78,59 @@ class ResumeRecommendationsAIOutput(BaseModel):
 class RecommendationItem(BaseModel):
     """Validated, finalized recommendation item with progress tracking."""
     id: str = Field(..., description="Unique recommendation identifier (e.g. REC-TECH-01)")
+    recommendation_id: Optional[str] = Field(default=None, description="Unique recommendation identifier alias")
     title: str = Field(..., description="Short, clear title for the recommendation")
     category: str = Field(..., description="Category key")
     category_name: str = Field(..., description="Human-readable category title")
-    explanation: str = Field(..., description="Detailed explanation of the issue")
+    description: str = Field(default="", description="Detailed description of the recommendation")
+    explanation: str = Field(default="", description="Detailed explanation of the issue")
     reason: str = Field(..., description="Why this recommendation matters")
+    reason_for_recommendation: Optional[str] = Field(default=None, description="Reason for recommendation alias")
     evidence: str = Field(default="", description="Supporting resume evidence")
+    supporting_evidence: Optional[str] = Field(default=None, description="Supporting resume evidence alias")
     suggested_action: str = Field(..., description="Actionable improvement steps")
     priority: RecommendationPriority = Field(default="Medium", description="Critical, High, Medium, or Low")
     estimated_effort: RecommendationEffort = Field(default="Medium", description="Easy, Medium, or Hard")
     related_feature: str = Field(..., description="Related analysis feature (e.g., Feature #24: ATS Compatibility)")
+    related_analysis_feature: Optional[str] = Field(default=None, description="Related analysis feature alias")
     is_completed: bool = Field(default=False, description="Completion status flag")
+    completion_status: Optional[str] = Field(default=None, description="Completion status ('Completed' or 'Pending')")
     completed_at: Optional[str] = Field(default=None, description="ISO timestamp of completion if completed")
+
+    @model_validator(mode="before")
+    @classmethod
+    def sync_item_fields(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            rec_id = data.get("id") or data.get("recommendation_id", "")
+            data["id"] = rec_id
+            data["recommendation_id"] = rec_id
+
+            desc = data.get("description")
+            expl = data.get("explanation")
+            if not desc and expl:
+                data["description"] = expl
+            elif not expl and desc:
+                data["explanation"] = desc
+            elif not desc and not expl:
+                data["description"] = data.get("title", "")
+                data["explanation"] = data.get("title", "")
+
+            reason = data.get("reason") or data.get("reason_for_recommendation", "")
+            data["reason"] = reason
+            data["reason_for_recommendation"] = reason
+
+            evid = data.get("evidence") or data.get("supporting_evidence", "")
+            data["evidence"] = evid
+            data["supporting_evidence"] = evid
+
+            rel = data.get("related_feature") or data.get("related_analysis_feature", "Feature #21-#26")
+            data["related_feature"] = rel
+            data["related_analysis_feature"] = rel
+
+            is_comp = bool(data.get("is_completed", False))
+            data["is_completed"] = is_comp
+            data["completion_status"] = data.get("completion_status") or ("Completed" if is_comp else "Pending")
+        return data
 
     @field_validator("evidence", mode="before")
     @classmethod

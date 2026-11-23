@@ -227,10 +227,11 @@ export function ResumeRecommendationDashboard({ resumeId, className }) {
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const titleMatch = item.title?.toLowerCase().includes(q);
-        const explanationMatch = item.explanation?.toLowerCase().includes(q);
+        const explanationMatch = (item.description || item.explanation)?.toLowerCase().includes(q);
+        const reasonMatch = (item.reason || item.reason_for_recommendation)?.toLowerCase().includes(q);
         const actionMatch = item.suggested_action?.toLowerCase().includes(q);
-        const idMatch = item.id?.toLowerCase().includes(q);
-        if (!titleMatch && !explanationMatch && !actionMatch && !idMatch) {
+        const idMatch = (item.id || item.recommendation_id)?.toLowerCase().includes(q);
+        if (!titleMatch && !explanationMatch && !reasonMatch && !actionMatch && !idMatch) {
           return false;
         }
       }
@@ -702,9 +703,9 @@ export function ResumeRecommendationDashboard({ resumeId, className }) {
                     )}
                   </div>
 
-                  {/* Detailed Explanation */}
+                  {/* Detailed Description / Explanation */}
                   <div className="text-xs text-slate-600 leading-relaxed pl-8">
-                    {item.explanation}
+                    {item.description || item.explanation}
                   </div>
 
                   {/* Why it Matters (Reason) */}

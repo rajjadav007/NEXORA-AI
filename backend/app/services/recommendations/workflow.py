@@ -407,19 +407,32 @@ async def deduplicate_and_prioritize_node(state: RecommendationWorkflowState) ->
         if effort not in ["Easy", "Medium", "Hard"]:
             effort = "Medium"
 
+        desc_val = (getattr(item, "description", None) or getattr(item, "explanation", None) or "").strip()
+        expl_val = (getattr(item, "explanation", None) or desc_val).strip()
+        reason_val = item.reason.strip()
+        evid_val = item.evidence.strip() if item.evidence else "Resume analysis audit"
+        act_val = item.suggested_action.strip()
+        rel_feat = item.related_feature or "Feature #21-#26"
+
         deduped.append({
             "id": rec_id,
+            "recommendation_id": rec_id,
             "title": clean_title,
             "category": cat_key,
             "category_name": get_category_display_name(cat_key),
-            "explanation": item.explanation.strip(),
-            "reason": item.reason.strip(),
-            "evidence": item.evidence.strip() if item.evidence else "Resume analysis audit",
-            "suggested_action": item.suggested_action.strip(),
+            "description": desc_val,
+            "explanation": expl_val,
+            "reason": reason_val,
+            "reason_for_recommendation": reason_val,
+            "evidence": evid_val,
+            "supporting_evidence": evid_val,
+            "suggested_action": act_val,
             "priority": prio,
             "estimated_effort": effort,
-            "related_feature": item.related_feature or "Feature #21-#26",
+            "related_feature": rel_feat,
+            "related_analysis_feature": rel_feat,
             "is_completed": False,
+            "completion_status": "Pending",
             "completed_at": None,
         })
 
@@ -510,6 +523,7 @@ async def save_recommendations_node(state: RecommendationWorkflowState) -> Dict[
         for item in validated:
             if item["title"] in completed_titles:
                 item["is_completed"] = True
+                item["completion_status"] = "Completed"
                 item["completed_at"] = completed_titles[item["title"]]
 
     total_count = len(validated)
