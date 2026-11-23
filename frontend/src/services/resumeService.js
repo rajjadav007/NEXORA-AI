@@ -3443,6 +3443,7 @@ export {
   generateResumeRecommendations,
   updateRecommendationStatus,
 } from './recommendationService.js';
+export { getResumeAnalyticsDashboard } from './analyticsService.js';
 
 
 

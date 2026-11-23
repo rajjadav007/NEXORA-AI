@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Upload,
   CheckCircle,
+  BarChart3,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';
@@ -206,6 +207,19 @@ export function SavedResumesList({ onUploadNew, className }) {
                         Set Active
                       </Button>
                     )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        selectResume(resume.id, resume);
+                        navigate(`/resume/analytics?id=${resume.id}`);
+                      }}
+                      className="text-xs h-8 flex items-center gap-1 border-slate-200 text-teal-700 hover:text-teal-800 hover:bg-teal-50"
+                      title="View resume analytics dashboard"
+                    >
+                      <BarChart3 className="w-3.5 h-3.5" /> Analytics
+                    </Button>
+
                     <Button
                       variant="outline"
                       size="sm"

@@ -1229,13 +1229,132 @@ Purpose:
 
 **Access:** Owner Only
 
-## 8.8 Get Resume Analytics
+## 8.8 Get Resume Analytics Dashboard (Feature #28)
 
-**Endpoint:** `/resume-analysis/{resume_id}/analytics`
+**Endpoint:** `/resumes/{resume_id}/analytics/dashboard` (also accessible via `/resumes/{resume_id}/analytics` and unversioned `/api/resumes/{resume_id}/analytics/dashboard`)
 
 **Method:** GET
 
-**Access:** Owner Only
+**Access:** Owner Only (enforced via `verify_resume_access`, requires matching user ID if resume has assigned owner)
+
+**Headers / Query Parameters:**
+
+| Parameter | Location | Type | Description |
+|---|---|---|---|
+| `resume_id` | Path | UUID | Target resume identifier |
+| `user_id` | Query | UUID (optional) | Authenticated user ID |
+| `X-User-Id` | Header | UUID (optional) | Authenticated user ID header |
+
+**Response Payload (`200 OK`):**
+```json
+{
+  "success": true,
+  "message": "Resume analytics dashboard retrieved successfully",
+  "data": {
+    "resume_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "resume_header": {
+      "resume_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "filename": "maya_patel_resume.pdf",
+      "file_type": "PDF",
+      "file_size": 1048576,
+      "last_analyzed_date": "2026-11-23T21:25:00.000000",
+      "analysis_status": "COMPLETE",
+      "coverage_count": 6,
+      "total_features": 6,
+      "available_features": [
+        "Feature #21: Resume Quality Score",
+        "Feature #22: Strength Analysis",
+        "Feature #23: Weakness Analysis",
+        "Feature #24: ATS Compatibility Analysis",
+        "Feature #25: Grammar & Clarity Analysis",
+        "Feature #26: Achievement Analysis"
+      ],
+      "missing_features": [],
+      "available_resumes": [
+        {
+          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "filename": "maya_patel_resume.pdf",
+          "created_at": "2026-11-23T21:00:00.000000",
+          "is_active": true
+        }
+      ]
+    },
+    "summary_cards": {
+      "quality_score": {
+        "score": 85.0,
+        "max_score": 100.0,
+        "grade_or_rating": "Strong",
+        "available": true,
+        "label": "Overall Quality Score",
+        "description": "Comprehensive multi-dimensional score (Strong)"
+      },
+      "ats_compatibility": {
+        "score": 90.0,
+        "max_score": 100.0,
+        "grade_or_rating": "Good",
+        "available": true,
+        "label": "ATS Compatibility Score",
+        "description": "Parsing & layout compatibility (Good)"
+      },
+      "readability": {
+        "score": 88.0,
+        "max_score": 100.0,
+        "grade_or_rating": "Professional",
+        "available": true,
+        "label": "Readability Score",
+        "description": "Clarity, grammar & tone quality (Professional)"
+      },
+      "content_completeness": {
+        "score": 95.0,
+        "max_score": 100.0,
+        "grade_or_rating": "Complete",
+        "available": true,
+        "label": "Content Completeness Score",
+        "description": "Standard section coverage & depth (Complete)"
+      }
+    },
+    "visual_analytics": {
+      "quality_category_breakdown": [
+        {
+          "category_key": "content_completeness",
+          "category_name": "Content Completeness",
+          "score": 9.5,
+          "max_score": 10.0,
+          "score_percentage": 95.0,
+          "rating": "Excellent",
+          "weight_percentage": 15.0
+        }
+      ],
+      "score_distribution": [
+        {
+          "metric": "Overall Quality",
+          "score": 85.0,
+          "max_score": 100.0,
+          "percentage": 85.0,
+          "status": "Strong",
+          "available": true
+        }
+      ],
+      "strengths_vs_weaknesses": {
+        "strengths_count": 8,
+        "weaknesses_count": 4,
+        "missing_info_count": 1,
+        "strengths_by_category": {},
+        "weaknesses_by_category": {},
+        "weaknesses_by_priority": {}
+      }
+    },
+    "resume_insights": {
+      "key_strengths": [],
+      "important_weaknesses": [],
+      "main_improvement_areas": [],
+      "feature_summaries": {}
+    },
+    "generated_at": "2026-11-23T21:25:00.000000",
+    "has_any_analysis": true
+  }
+}
+```
 
 ## 8.9 Export Resume Report
 

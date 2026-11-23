@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   FileText,
   FileCheck,
@@ -12,6 +13,7 @@ import {
   Eye,
   Bookmark,
   Check,
+  BarChart3,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';
@@ -49,6 +51,7 @@ export function ResumePreview({
   onNewUpload,
   className,
 }) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('cleaned'); // 'cleaned' | 'original'
   const [isSaving, setIsSaving] = useState(false);
   const [savedVersion, setSavedVersion] = useState(null);
@@ -280,6 +283,17 @@ export function ResumePreview({
                 <span className="text-[10px] font-semibold text-slate-400 block uppercase">Characters</span>
                 <span className="text-xs font-bold text-slate-800 font-mono">{character_count?.toLocaleString()}</span>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/resume/analytics?id=${resume_id}`)}
+                className="text-xs h-9 flex items-center gap-1.5 border-slate-200 text-teal-700 hover:text-teal-800 hover:bg-teal-50 font-semibold"
+                title="View Resume Analytics Dashboard"
+              >
+                <BarChart3 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Analytics Dashboard</span>
+              </Button>
+
               <Button
                 variant={savedVersion ? 'outline' : 'default'}
                 size="sm"
