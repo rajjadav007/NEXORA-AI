@@ -1356,6 +1356,84 @@ Purpose:
 }
 ```
 
+## 8.8.1 Get Resume Skill Distribution (Feature #29)
+
+**Endpoint:** `/resumes/{resume_id}/analytics/skills` (also accessible via `/api/resumes/{resume_id}/analytics/skills` and `/api/v1/resumes/{resume_id}/analytics/skills`)
+
+**Method:** GET
+
+**Access:** Owner Only (enforced via `verify_resume_access`)
+
+Query Parameters:
+- `user_id` (optional, string): Optional authenticated user ID query parameter.
+
+Headers:
+- `X-User-Id` (optional, string): Authenticated user ID header.
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Resume skill distribution retrieved successfully",
+  "data": {
+    "resume_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "total_skills": 13,
+    "categories": [
+      {
+        "name": "Programming Languages",
+        "count": 3,
+        "skills": ["Python", "SQL", "TypeScript"]
+      },
+      {
+        "name": "AI and Machine Learning",
+        "count": 2,
+        "skills": ["Natural Language Processing", "PyTorch"]
+      },
+      {
+        "name": "Data Science and Analytics",
+        "count": 1,
+        "skills": ["Pandas"]
+      },
+      {
+        "name": "Frameworks and Libraries",
+        "count": 2,
+        "skills": ["FastAPI", "React"]
+      },
+      {
+        "name": "Databases",
+        "count": 1,
+        "skills": ["PostgreSQL"]
+      },
+      {
+        "name": "Cloud and DevOps",
+        "count": 2,
+        "skills": ["AWS", "Docker"]
+      },
+      {
+        "name": "Development Tools",
+        "count": 1,
+        "skills": ["Git"]
+      },
+      {
+        "name": "Other Skills",
+        "count": 1,
+        "skills": ["Agile Coaching"]
+      }
+    ],
+    "summary": {
+      "total_skills": 13,
+      "total_categories": 8,
+      "most_populated_category": {
+        "name": "Programming Languages",
+        "count": 3
+      },
+      "uncategorized_skills": ["Agile Coaching"]
+    }
+  }
+}
+```
+
 ## 8.9 Export Resume Report
 
 **Endpoint:** `/resume-analysis/{resume_id}/export`

@@ -46,7 +46,11 @@ This document tracks implemented features across stages and phases of Nexora AI.
   - Visual Analytics: Quality category breakdown, cross-analysis distribution, strengths vs weaknesses ratio.
   - Synthesized insights: Key strengths, weaknesses, priority improvement actions, feature summaries.
   - Multi-resume switcher and responsive desktop/tablet/mobile design.
-- Feature #29: Skill Distribution (Pending)
+- **Feature #29: Skill Distribution (Completed)**
+  - Organizes and categorizes extracted skills into 8 canonical technical domains: Programming Languages, AI and Machine Learning, Data Science and Analytics, Frameworks and Libraries, Databases, Cloud and DevOps, Development Tools, and Other Skills.
+  - Endpoint `GET /api/resumes/{resume_id}/analytics/skills` (and `/api/v1/...`) with full auth guard, deterministic classification, deduplication, and aggregate summaries.
+  - Interactive SVG Donut chart, Category Comparison Bar chart, real-time search filtering, category pills, and collapsible category cards.
+  - Seamlessly integrated into Feature #28 Resume Analytics Dashboard.
 - Feature #30: Resume Improvement Tracker (Pending)
 - Feature #31: AI Resume Report (Pending)
 - Feature #32: PDF Report Export (Pending)
