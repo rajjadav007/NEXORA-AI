@@ -9,7 +9,7 @@ Phase 5 delivers visual analytics, reporting, and export capabilities based on P
 | Feature #28 | Resume Analytics Dashboard | Aggregated visual metrics, summary cards, scoring distribution, and synthesized insights | **Completed** |
 | Feature #29 | Skill Distribution | Visualizing extracted skills and category weighting | **Completed** |
 | Feature #30 | Resume Improvement Tracker | Tracking version-over-version score improvement, tasks, and history | **Completed** |
-| Feature #31 | AI Resume Report | Comprehensive text report generation | Planned |
+| Feature #31 | AI Resume Report | Comprehensive text report generation | **Completed** |
 | Feature #32 | PDF Report Export | Client- and server-side PDF document generation | Planned |
 
 ## Feature #28: Resume Analytics Dashboard Architecture
@@ -115,5 +115,55 @@ Task progress is clearly distinguished from score improvements (score deltas).
 - `ResumeImprovementTracker.jsx`: Embedded in `ResumeAnalyticsDashboard.jsx`.
 - `ResumeImprovementsPage.jsx`: Dedicated route `/resume/improvements` and `/resume/:resumeId/improvements`.
 - `improvementService.js`: Frontend API client methods.
+
+---
+
+## Feature #31: AI Resume Report Architecture
+
+### 1. Overview & Data Model
+Provides an AI-powered, multi-dimensional assessment of candidate resumes, synthesizing Phase 3 (intelligence), Phase 4 (quality scores, strengths, weaknesses, ATS, grammar, recommendations), and Phase 5 evaluations.
+
+- **Reports Table (`resume_reports`)**:
+  - `id`: UUID Primary Key
+  - `resume_id`: UUID Foreign Key (`resumes.id`, `CASCADE`)
+  - `user_id`: UUID Foreign Key (`users.id`, `SET NULL`)
+  - `model_name`: Configured local LLM model (e.g. `gemma4:12b`)
+  - `status`: `COMPLETED` / `FAILED`
+  - `report_data`: Complete 11-section structured JSON payload
+  - `executive_summary`: Narrative executive summary text
+  - `generation_duration_seconds`: Execution duration in seconds
+  - `created_at` / `updated_at`: Real timestamps
+
+### 2. Report Sections Structure
+1. **Executive Summary**: Overall profile assessment, primary strengths, key weaknesses, general improvement direction.
+2. **Resume Quality Assessment**: Overall quality score, ATS compatibility, readability, content completeness with clear explanations.
+3. **Skills Assessment**: Technical skills, AI/ML skills, programming languages, frameworks and tools, distribution observations.
+4. **Experience Assessment**: Responsibilities, achievements, quantifiable impact, professional presentation.
+5. **Education Assessment**: Degrees reviewed, academic presentation, relevant certifications.
+6. **Projects Assessment**: Technical depth, problem clarity, implementation rigor, outcomes.
+7. **Resume Strengths**: Evidence-backed, prioritized list of genuine strengths.
+8. **Weakness Analysis**: Evidence-grounded issues with severity levels and recommendations.
+9. **ATS Assessment**: Available ATS score, parser safety summary, formatting flags, section completeness.
+10. **Improvement Recommendations**: Prioritized recommendations (High, Medium, Low) with suggested next actions.
+11. **Final Strategic Assessment**: Overall conclusion, top five immediate actions, strategic priorities.
+
+### 3. AI Safety & Local Model Integration
+- **Local Ollama Integration**: Powered by local `gemma4:12b` via LangChain `ChatOllama`.
+- **Zero Paid APIs**: Operates locally without external cloud dependencies.
+- **Prompt Injection Defense**: Treats candidate resume text strictly as untrusted data input, preventing instruction hijacking.
+- **Factual Integrity**: Never hallucinates credentials, projects, or metrics not present in database records.
+- **Graceful Error Recovery**: Translates Ollama connection/timeout failures into `503 Service Unavailable`, with deterministic synthesis fallback.
+
+### 4. API Endpoints
+- `POST /api/v1/resumes/{resume_id}/reports/generate` (and alias `POST /api/resumes/{resume_id}/reports/generate`): Generates or retrieves report.
+- `GET /api/v1/resumes/{resume_id}/reports` (and alias `GET /api/resumes/{resume_id}/reports`): Chronological report history.
+- `GET /api/v1/resumes/{resume_id}/reports/latest` (and alias `GET /api/resumes/{resume_id}/reports/latest`): Latest report.
+- `GET /api/v1/resumes/{resume_id}/reports/{report_id}` (and alias `GET /api/resumes/{resume_id}/reports/{report_id}`): Specific report by ID.
+
+### 5. Frontend Components
+- `ResumeReportView.jsx`: Responsive multi-card report presentation component.
+- `ResumeReportPage.jsx`: Dedicated route `/resume/report` and `/resume/:resumeId/report`.
+- `reportService.js`: API service methods with comprehensive error handling.
+
 
 

@@ -298,6 +298,29 @@ Scores must follow documented evaluation rules.
 - `ix_resume_timeline_events_resume_id` on `resume_id`
 - `ix_resume_timeline_events_created_at` on `created_at`
 
+## 7.7 resume_reports (Phase 5 | Feature 31: AI Resume Report)
+
+**Purpose:** Persist structured, comprehensive 11-section AI resume assessment reports generated via local Ollama LLM (`gemma4:12b`), with model caching, generation metrics, and historical auditability.
+
+| Column | Data Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | Primary Key, Default uuid4 | Unique report record identifier |
+| resume_id | UUID | Foreign Key (resumes.id, ON DELETE CASCADE), Not Null, Index | Target resume assessed |
+| user_id | UUID | Foreign Key (users.id, ON DELETE CASCADE), Not Null, Index | Owning user account |
+| report_title | VARCHAR(255) | Not Null, Default 'AI Resume Assessment Report' | Descriptive title of report |
+| report_data | JSONB | Not Null | Structured 11-section JSON payload (Sections A through K) |
+| model_name | VARCHAR(100) | Not Null, Default 'gemma4:12b' | Local Ollama LLM identifier used for generation |
+| generation_duration_ms | INTEGER | Nullable | Wall-clock latency for report generation in milliseconds |
+| is_cached | BOOLEAN | Not Null, Default FALSE | Flag denoting if retrieved from pre-generated cache |
+| executive_summary_preview | TEXT | Nullable | High-level summary excerpt for fast dashboard listing |
+| created_at | TIMESTAMPTZ | Not Null, Default CURRENT_TIMESTAMP, Index | Report generation timestamp |
+| updated_at | TIMESTAMPTZ | Not Null, Default CURRENT_TIMESTAMP | Last update timestamp |
+
+**Indexes:**
+- `ix_resume_reports_resume_id` on `resume_id`
+- `ix_resume_reports_user_id` on `user_id`
+- `ix_resume_reports_created_at` on `created_at`
+
 # 8. RESUME INTELLIGENCE TABLES
 
 ## 8.1 resume_personal_information (Phase 3 | Feature 13)

@@ -50,8 +50,10 @@ def create_application() -> FastAPI:
     # Direct alias for /api/resumes/... to support unversioned paths (e.g. GET /api/resumes/{id}/analytics/dashboard)
     from app.api.v1.endpoints.analytics import router as direct_analytics_router
     from app.api.v1.endpoints.improvements import router as direct_improvements_router
+    from app.api.v1.endpoints.reports import router as direct_reports_router
     application.include_router(direct_analytics_router, prefix="/api/resumes", tags=["Resume Analytics Dashboard Alias"], include_in_schema=False)
     application.include_router(direct_improvements_router, prefix="/api/resumes", tags=["Resume Improvement Tracker Alias"], include_in_schema=False)
+    application.include_router(direct_reports_router, prefix="/api/resumes", tags=["AI Resume Report Alias"], include_in_schema=False)
 
     # Root endpoint
     @application.get("/", tags=["Root"])

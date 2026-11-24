@@ -20,6 +20,7 @@ from app.models.improvement_tracker import (
     ResumeImprovementTask,
     ResumeTimelineEvent,
 )
+from app.models.report import ResumeReport
 
 __all__ = [
     "Base",
@@ -46,4 +47,5 @@ __all__ = [
     "ResumeAnalysisSnapshot",
     "ResumeImprovementTask",
     "ResumeTimelineEvent",
+    "ResumeReport",
 ]

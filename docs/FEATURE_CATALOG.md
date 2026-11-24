@@ -60,5 +60,12 @@ This document tracks implemented features across stages and phases of Nexora AI.
   - Side-by-side resume version comparison detailing upload/analysis dates, textual changes (words/lines/characters), added/removed/retained skills, and score deltas.
   - REST endpoints under `/api/resumes/{resume_id}/improvements` (overview, history, tasks, patch task status, compare versions) with authenticated user & resume ownership enforcement.
   - Responsive frontend tracker integrated into the Resume Analytics Dashboard and available via dedicated route `/resume/improvements`.
-- Feature #31: AI Resume Report (Pending)
+- **Feature #31: AI Resume Report (Completed)**
+  - Local Ollama-powered comprehensive evaluation system generating structured, 11-section personalized assessments.
+  - Sections covered: Executive Summary, Resume Quality Assessment, Skills Assessment (8 domains), Experience Assessment, Education Assessment, Projects Assessment, Prioritized Strengths, Weakness Analysis, ATS Assessment, Improvement Recommendations, and Final Assessment.
+  - Reuses existing Phase 3 (intelligence), Phase 4 (quality scores, strengths, weaknesses, ATS, grammar, recommendations), and Phase 5 evaluations without redundant AI calls or document re-parsing.
+  - Robust local Ollama integration using Gemma 4 12B with connection timeout handling, graceful 503 error responses, and deterministic baseline fallback.
+  - Persisted in PostgreSQL `resume_reports` table preserving historical reports, model metadata, and generation runtimes.
+  - REST endpoints under `/api/resumes/{resume_id}/reports` (generate, history, latest, get by id) with authenticated user & resume ownership enforcement.
+  - Clean, responsive React frontend report interface with executive summary cards, detailed section breakdowns, report history picker, and regeneration capabilities.
 - Feature #32: PDF Report Export (Pending)

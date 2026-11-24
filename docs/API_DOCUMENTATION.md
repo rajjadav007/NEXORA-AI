@@ -1650,6 +1650,182 @@ Track resume quality evolution, score comparisons, improvement tasks, timeline m
 }
 ```
 
+## 8.8.3 AI Resume Report (Feature #31)
+
+### 8.8.3.1 Generate or Retrieve Latest AI Resume Report
+
+**Endpoint:** `/resumes/{resume_id}/reports/generate` (also accessible via `/api/resumes/{resume_id}/reports/generate` and `/api/v1/resumes/{resume_id}/reports/generate`)
+
+**Method:** POST
+
+**Access:** Owner Only
+
+**Request Payload:**
+```json
+{
+  "force_regenerate": false
+}
+```
+
+**Query Parameters (Optional):**
+- `force_regenerate`: boolean (query or body param). When `true`, forces Ollama to generate a brand new report instead of returning a cached version.
+
+**Response Payload (`200 OK` or `201 Created`):**
+```json
+{
+  "success": true,
+  "message": "AI Resume Report generated successfully",
+  "data": {
+    "report_id": "8f3e5c72-9b1a-4d2e-8f3a-1b2c3d4e5f6a",
+    "resume_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "report_title": "AI Resume Assessment Report - Jane Doe",
+    "generated_at": "2026-11-24T22:30:00Z",
+    "model_name": "gemma4:12b",
+    "is_cached": false,
+    "generation_duration_ms": 1420,
+    "report": {
+      "executive_summary": {
+        "overall_assessment": "Strong mid-to-senior profile with robust backend experience...",
+        "main_strengths": ["Clear quantification of metrics", "Solid cloud architecture stack"],
+        "primary_weaknesses": ["Lack of links for sample projects", "Underrepresented automated testing details"],
+        "strategic_direction": "Highlight system design depth and add direct project repository links."
+      },
+      "resume_quality_assessment": {
+        "overall_score": 85.0,
+        "ats_compatibility_score": 82.0,
+        "readability_score": 78.0,
+        "content_completeness_score": 90.0,
+        "score_explanations": {
+          "overall_score": "Composite metric reflecting quality across content, structure, and formatting.",
+          "ats_compatibility_score": "Measures machine-readability and standard resume section naming.",
+          "readability_score": "Assesses sentence structure, brevity, and cognitive load.",
+          "content_completeness_score": "Evaluates presence of critical resume sections."
+        }
+      },
+      "skills_assessment": {
+        "technical_skills": ["Python", "FastAPI", "PostgreSQL", "Docker", "Kubernetes"],
+        "ai_ml_skills": ["LangChain", "PyTorch", "RAG"],
+        "programming_languages": ["Python", "JavaScript", "SQL"],
+        "frameworks_and_tools": ["FastAPI", "React", "Docker", "Git"],
+        "distribution_observations": "Backend technologies account for 65% of detected skills.",
+        "missing_or_underrepresented_skills": []
+      },
+      "experience_assessment": {
+        "work_experience_analysis": "Experience descriptions demonstrate progressive career growth...",
+        "responsibilities_analysis": "Clearly outlined ownership over microservice development.",
+        "achievements_analysis": "High achievement density with measurable percentages.",
+        "use_of_metrics": "Excellent use of impact metrics (e.g., reduced latency by 35%).",
+        "presentation_clarity": "Professional and consistent reverse-chronological presentation."
+      },
+      "education_assessment": {
+        "degree_details": "B.S. in Computer Science",
+        "academic_presentation": "Clean formatting with institution name and graduation year.",
+        "certifications_detected": ["AWS Certified Solutions Architect"]
+      },
+      "projects_assessment": {
+        "project_count": 2,
+        "projects_overview": "Projects demonstrate hands-on application of full-stack skills.",
+        "technical_depth": "High technical depth featuring asynchronous architectures.",
+        "measurable_outcomes": "Demonstrates measurable deployment and query speed improvements."
+      },
+      "resume_strengths": [
+        {
+          "title": "Strong Quantified Impact",
+          "description": "Consistently couples actions with measurable performance percentages.",
+          "evidence": "Reduced database query latency by 45% using Redis caching."
+        }
+      ],
+      "weakness_analysis": [
+        {
+          "title": "Missing Repository Links",
+          "description": "Featured projects lack direct GitHub or live demo URLs.",
+          "section": "projects",
+          "evidence": "Project entries do not contain hyperlink fields."
+        }
+      ],
+      "ats_assessment": {
+        "ats_score": 82.0,
+        "keyword_coverage": "Strong representation of core backend engineering keywords.",
+        "formatting_issues": [],
+        "section_completeness": "All standard sections (Contact, Experience, Skills, Education) detected.",
+        "actionable_improvements": ["Ensure standard bullet points throughout all sections."]
+      },
+      "improvement_recommendations": [
+        {
+          "title": "Add GitHub links to projects",
+          "description": "Include verifiable links to open source repositories.",
+          "priority": "HIGH",
+          "section": "projects",
+          "actionable_step": "Insert project URLs under project headers."
+        }
+      ],
+      "final_assessment": {
+        "conclusion": "The candidate has a highly competitive engineering resume with minimal gaps.",
+        "top_five_actions": [
+          "Add verifiable repository URLs to top 2 projects",
+          "Include unit testing frameworks in skills",
+          "Standardize bullet formatting across past roles",
+          "Add target industry keywords",
+          "Review font consistency"
+        ],
+        "priority_focus": "Portfolio verifiability and keyword alignment."
+      }
+    }
+  }
+}
+```
+
+### 8.8.3.2 Get AI Resume Report History
+
+**Endpoint:** `/resumes/{resume_id}/reports`
+
+**Method:** GET
+
+**Access:** Owner Only
+
+**Response Payload (`200 OK`):**
+```json
+{
+  "success": true,
+  "message": "Resume report history retrieved successfully",
+  "data": {
+    "resume_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "total_reports": 2,
+    "reports": [
+      {
+        "id": "8f3e5c72-9b1a-4d2e-8f3a-1b2c3d4e5f6a",
+        "resume_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "report_title": "AI Resume Assessment Report - Jane Doe",
+        "model_name": "gemma4:12b",
+        "executive_summary_preview": "Strong mid-to-senior profile with robust backend experience...",
+        "generation_duration_ms": 1420,
+        "created_at": "2026-11-24T22:30:00Z"
+      }
+    ]
+  }
+}
+```
+
+### 8.8.3.3 Get Latest AI Resume Report
+
+**Endpoint:** `/resumes/{resume_id}/reports/latest`
+
+**Method:** GET
+
+**Access:** Owner Only
+
+**Response Payload (`200 OK`):** Returns the most recent structured report envelope, or `404 Not Found` if no report has been generated yet.
+
+### 8.8.3.4 Get Specific AI Resume Report by ID
+
+**Endpoint:** `/resumes/{resume_id}/reports/{report_id}`
+
+**Method:** GET
+
+**Access:** Owner Only
+
+**Response Payload (`200 OK`):** Returns the specific historical structured report envelope.
+
 ## 8.9 Export Resume Report
 
 **Endpoint:** `/resume-analysis/{resume_id}/export`

@@ -10,6 +10,7 @@ import { ResumePage } from '../pages/ResumePage';
 import { ResumePreviewPage } from '../pages/ResumePreviewPage';
 import { ResumeAnalyticsPage } from '../pages/ResumeAnalyticsPage';
 import { ResumeImprovementsPage } from '../pages/ResumeImprovementsPage';
+import { ResumeReportPage } from '../pages/ResumeReportPage';
 import { JobsPage } from '../pages/JobsPage';
 import { EmployerPage } from '../pages/EmployerPage';
 import { MatchingPage } from '../pages/MatchingPage';
@@ -80,6 +81,14 @@ export const router = createBrowserRouter([
           {
             path: 'resume/:resumeId/improvements',
             element: <ResumeImprovementsPage />,
+          },
+          {
+            path: 'resume/report',
+            element: <ResumeReportPage />,
+          },
+          {
+            path: 'resume/:resumeId/report',
+            element: <ResumeReportPage />,
           },
           {
             path: 'jobs',

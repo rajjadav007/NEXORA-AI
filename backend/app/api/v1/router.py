@@ -16,6 +16,7 @@ from app.api.v1.endpoints.achievement_analysis import router as achievement_anal
 from app.api.v1.endpoints.recommendations import router as recommendations_router
 from app.api.v1.endpoints.analytics import router as analytics_router
 from app.api.v1.endpoints.improvements import router as improvements_router
+from app.api.v1.endpoints.reports import router as reports_router
 
 api_router = APIRouter()
 api_router.include_router(health_router)
@@ -37,3 +38,4 @@ api_router.include_router(grammar_analysis_router, prefix="/resumes", tags=["Res
 api_router.include_router(recommendations_router, prefix="/resumes", tags=["Resume Improvement Recommendations"])
 api_router.include_router(analytics_router, prefix="/resumes", tags=["Resume Analytics Dashboard"])
 api_router.include_router(improvements_router, prefix="/resumes", tags=["Resume Improvement Tracker"])
+api_router.include_router(reports_router, prefix="/resumes", tags=["AI Resume Report"])

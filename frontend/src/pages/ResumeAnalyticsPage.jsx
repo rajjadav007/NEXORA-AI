@@ -3,7 +3,7 @@ import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/layout/PageHeader';
 import { ResumeAnalyticsDashboard } from '../components/resume/ResumeAnalyticsDashboard';
 import { Button } from '../components/ui/button';
-import { ArrowLeft, Eye, Upload } from 'lucide-react';
+import { ArrowLeft, Eye, TrendingUp, FileText } from 'lucide-react';
 import { useResume } from '../context/ResumeContext';
 
 /**
@@ -41,16 +41,34 @@ export function ResumeAnalyticsPage() {
           badge="Phase 5 • Feature 28"
         />
 
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap">
           {resumeId && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(`/resume/preview?id=${resumeId}`)}
-              className="flex items-center gap-1.5 text-xs text-slate-700 border-slate-300 hover:bg-slate-50"
-            >
-              <Eye className="w-3.5 h-3.5" /> Resume Details
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/resume/report?id=${resumeId}`)}
+                className="flex items-center gap-1.5 text-xs text-slate-700 border-slate-300 hover:bg-slate-50"
+              >
+                <FileText className="w-3.5 h-3.5" /> AI Report
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/resume/improvements?id=${resumeId}`)}
+                className="flex items-center gap-1.5 text-xs text-slate-700 border-slate-300 hover:bg-slate-50"
+              >
+                <TrendingUp className="w-3.5 h-3.5" /> Improvement Tracker
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/resume/preview?id=${resumeId}`)}
+                className="flex items-center gap-1.5 text-xs text-slate-700 border-slate-300 hover:bg-slate-50"
+              >
+                <Eye className="w-3.5 h-3.5" /> Resume Details
+              </Button>
+            </>
           )}
 
           <Button

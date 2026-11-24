@@ -153,6 +153,12 @@ class Resume(Base):
         cascade="all, delete-orphan",
         order_by="ResumeTimelineEvent.created_at.asc()",
     )
+    reports = relationship(
+        "ResumeReport",
+        back_populates="resume",
+        cascade="all, delete-orphan",
+        order_by="ResumeReport.created_at.desc()",
+    )
 
 
 class ResumeVersion(Base):
