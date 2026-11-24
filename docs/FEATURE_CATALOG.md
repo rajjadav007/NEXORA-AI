@@ -51,6 +51,14 @@ This document tracks implemented features across stages and phases of Nexora AI.
   - Endpoint `GET /api/resumes/{resume_id}/analytics/skills` (and `/api/v1/...`) with full auth guard, deterministic classification, deduplication, and aggregate summaries.
   - Interactive SVG Donut chart, Category Comparison Bar chart, real-time search filtering, category pills, and collapsible category cards.
   - Seamlessly integrated into Feature #28 Resume Analytics Dashboard.
-- Feature #30: Resume Improvement Tracker (Pending)
+- **Feature #30: Resume Improvement Tracker (Completed)**
+  - Stores and retrieves chronological resume analysis snapshots without overwriting historical evaluations.
+  - Compares version-over-version scores (Overall Quality, ATS Compatibility, Readability, and category breakdowns) with explicit improvement, decline, or unchanged indicators.
+  - Actionable improvement task management with priority indicators (High, Medium, Low), status tracking (Pending, In Progress, Completed), real-time status updates, filtering, and completion dates persisted in PostgreSQL.
+  - Progress metrics calculating overall task completion percentage `(Completed Tasks / Total Tasks) × 100`, clearly distinguishing task progress from actual score changes.
+  - Chronological improvement timeline tracking key milestones (resume uploaded, analyzed, tasks created, tasks completed, new versions analyzed) with real timestamps.
+  - Side-by-side resume version comparison detailing upload/analysis dates, textual changes (words/lines/characters), added/removed/retained skills, and score deltas.
+  - REST endpoints under `/api/resumes/{resume_id}/improvements` (overview, history, tasks, patch task status, compare versions) with authenticated user & resume ownership enforcement.
+  - Responsive frontend tracker integrated into the Resume Analytics Dashboard and available via dedicated route `/resume/improvements`.
 - Feature #31: AI Resume Report (Pending)
 - Feature #32: PDF Report Export (Pending)

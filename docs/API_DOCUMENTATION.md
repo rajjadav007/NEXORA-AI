@@ -1434,6 +1434,222 @@ Response:
 }
 ```
 
+## 8.8.2 Resume Improvement Tracker (Feature #30)
+
+Track resume quality evolution, score comparisons, improvement tasks, timeline milestones, and version differences.
+
+### 8.8.2.1 Get Resume Improvement Tracker Overview
+
+**Endpoint:** `/resumes/{resume_id}/improvements` (also accessible via `/api/resumes/{resume_id}/improvements` and `/api/v1/resumes/{resume_id}/improvements`)
+
+**Method:** GET
+
+**Access:** Owner Only (enforced via `verify_resume_access`)
+
+**Parameters:**
+
+| Parameter | Location | Type | Description |
+|---|---|---|---|
+| `resume_id` | Path | UUID | Target resume identifier |
+| `user_id` | Query | UUID (optional) | Authenticated user ID |
+| `X-User-Id` | Header | UUID (optional) | Authenticated user ID header |
+
+**Response Payload (`200 OK`):**
+```json
+{
+  "success": true,
+  "message": "Resume improvement tracking data retrieved successfully",
+  "data": {
+    "resume_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "filename": "maya_patel_resume.pdf",
+    "score_comparison": {
+      "overall_score": {
+        "previous_score": 72.0,
+        "latest_score": 85.0,
+        "delta": 13.0,
+        "status": "improved"
+      },
+      "ats_compatibility": {
+        "previous_score": 68.0,
+        "latest_score": 82.0,
+        "delta": 14.0,
+        "status": "improved"
+      },
+      "readability": {
+        "previous_score": 75.0,
+        "latest_score": 75.0,
+        "delta": 0.0,
+        "status": "unchanged"
+      },
+      "category_comparisons": {}
+    },
+    "progress_overview": {
+      "total_tasks": 4,
+      "completed_tasks": 2,
+      "pending_tasks": 1,
+      "in_progress_tasks": 1,
+      "completion_percentage": 50.0,
+      "score_improvement_delta": 13.0
+    },
+    "tasks": [
+      {
+        "id": "e4b2d3c1-0000-0000-0000-000000000001",
+        "resume_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "title": "Add Quantifiable Metrics to Experience",
+        "description": "Include percentage growth and throughput numbers in bullet points.",
+        "section": "Work Experience",
+        "priority": "High",
+        "status": "Completed",
+        "created_at": "2026-11-24T20:00:00Z",
+        "completed_at": "2026-11-24T21:30:00Z",
+        "updated_at": "2026-11-24T21:30:00Z"
+      }
+    ],
+    "timeline": [
+      {
+        "id": "d1a2b3c4-0000-0000-0000-000000000001",
+        "resume_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "event_type": "TASK_COMPLETED",
+        "title": "Task Completed: Add Quantifiable Metrics",
+        "description": "Improvement task marked as completed.",
+        "event_metadata": {},
+        "created_at": "2026-11-24T21:30:00Z"
+      }
+    ],
+    "history": [],
+    "available_versions": [
+      {
+        "version_number": 1,
+        "version_name": "Version 1",
+        "created_at": "2026-11-24T20:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+### 8.8.2.2 Get Resume Improvement History
+
+**Endpoint:** `/resumes/{resume_id}/improvements/history`
+
+**Method:** GET
+
+**Access:** Owner Only
+
+**Response Payload (`200 OK`):**
+```json
+{
+  "success": true,
+  "message": "Resume improvement history retrieved successfully",
+  "data": [
+    {
+      "id": "9fa85f64-0000-0000-0000-000000000001",
+      "resume_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "version_number": 1,
+      "version_name": "Version 1",
+      "overall_score": 72.0,
+      "ats_score": 68.0,
+      "readability_score": 75.0,
+      "category_scores": {},
+      "strengths_count": 3,
+      "weaknesses_count": 4,
+      "created_at": "2026-11-24T20:00:00Z"
+    }
+  ]
+}
+```
+
+### 8.8.2.3 Get Resume Improvement Tasks
+
+**Endpoint:** `/resumes/{resume_id}/improvements/tasks`
+
+**Method:** GET
+
+**Access:** Owner Only
+
+**Query Parameters:**
+- `status`: Optional filter (`Pending`, `In Progress`, `Completed`)
+- `priority`: Optional filter (`High`, `Medium`, `Low`)
+
+### 8.8.2.4 Update Resume Improvement Task Status
+
+**Endpoint:** `/resumes/{resume_id}/improvements/tasks/{task_id}`
+
+**Method:** PATCH
+
+**Access:** Owner Only
+
+**Request Body:**
+```json
+{
+  "status": "Completed",
+  "priority": "High"
+}
+```
+
+### 8.8.2.5 Compare Resume Versions
+
+**Endpoint:** `/resumes/{resume_id}/improvements/compare`
+
+**Method:** GET
+
+**Access:** Owner Only
+
+**Query Parameters:**
+- `v1`: Integer version number (defaults to previous version)
+- `v2`: Integer version number (defaults to latest version)
+
+**Response Payload (`200 OK`):**
+```json
+{
+  "success": true,
+  "message": "Resume versions compared successfully",
+  "data": {
+    "resume_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "version_1": {
+      "version_number": 1,
+      "version_name": "Version 1",
+      "upload_date": "2026-11-24T20:00:00Z",
+      "analysis_date": "2026-11-24T20:05:00Z",
+      "word_count": 350,
+      "line_count": 42,
+      "char_count": 2400
+    },
+    "version_2": {
+      "version_number": 2,
+      "version_name": "Version 2",
+      "upload_date": "2026-11-24T21:00:00Z",
+      "analysis_date": "2026-11-24T21:05:00Z",
+      "word_count": 410,
+      "line_count": 48,
+      "char_count": 2850
+    },
+    "score_comparison": {
+      "overall_score": { "previous_score": 72.0, "latest_score": 85.0, "delta": 13.0, "status": "improved" },
+      "ats_compatibility": { "previous_score": 68.0, "latest_score": 82.0, "delta": 14.0, "status": "improved" },
+      "readability": { "previous_score": 75.0, "latest_score": 75.0, "delta": 0.0, "status": "unchanged" }
+    },
+    "skills_comparison": {
+      "added_skills": ["kubernetes", "terraform"],
+      "removed_skills": [],
+      "retained_skills": ["docker", "fastapi", "postgresql", "python", "react"],
+      "total_retained": 5,
+      "total_added": 2,
+      "total_removed": 0
+    },
+    "content_changes": {
+      "word_count_diff": 60,
+      "line_count_diff": 6,
+      "char_count_diff": 450,
+      "summary": "Word count changed by +60 words (350 -> 410). Identified 2 added skills and 0 removed skills."
+    },
+    "notes": [
+      "Score deltas reflect evaluation model ratings. Text statistics reflect raw extracted content."
+    ]
+  }
+}
+```
+
 ## 8.9 Export Resume Report
 
 **Endpoint:** `/resume-analysis/{resume_id}/export`

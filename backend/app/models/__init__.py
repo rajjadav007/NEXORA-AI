@@ -15,6 +15,11 @@ from app.models.ats_analysis import ResumeATSAnalysis
 from app.models.grammar_analysis import ResumeGrammarAnalysis
 from app.models.achievement_analysis import ResumeAchievementAnalysis
 from app.models.recommendations import ResumeRecommendationAnalysis
+from app.models.improvement_tracker import (
+    ResumeAnalysisSnapshot,
+    ResumeImprovementTask,
+    ResumeTimelineEvent,
+)
 
 __all__ = [
     "Base",
@@ -38,4 +43,7 @@ __all__ = [
     "ResumeGrammarAnalysis",
     "ResumeAchievementAnalysis",
     "ResumeRecommendationAnalysis",
+    "ResumeAnalysisSnapshot",
+    "ResumeImprovementTask",
+    "ResumeTimelineEvent",
 ]

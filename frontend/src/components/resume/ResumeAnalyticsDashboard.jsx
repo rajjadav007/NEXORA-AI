@@ -32,6 +32,7 @@ import { useResume } from '../../context/ResumeContext';
 import { formatFileSize } from '../../hooks/useResumeUpload';
 import { cn } from '../../utils/cn';
 import { SkillDistributionSection } from './SkillDistributionSection';
+import { ResumeImprovementTracker } from './ResumeImprovementTracker';
 
 /**
  * Helper to compute color classes based on 0-100 score value.
@@ -723,6 +724,9 @@ export function ResumeAnalyticsDashboard({
 
       {/* SECTION: SKILL DISTRIBUTION ANALYTICS (Phase 5 | Feature #29) */}
       <SkillDistributionSection resumeId={activeId} />
+
+      {/* SECTION: RESUME IMPROVEMENT TRACKER (Phase 5 | Feature #30) */}
+      <ResumeImprovementTracker resumeId={activeId} />
 
       {/* SECTION D: RESUME INSIGHTS (Strengths, Weaknesses, Improvements, Feature Summaries) */}
       <Card className="border-slate-200 shadow-sm bg-white overflow-hidden">

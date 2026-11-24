@@ -8,7 +8,7 @@ Phase 5 delivers visual analytics, reporting, and export capabilities based on P
 |---|---|---|---|
 | Feature #28 | Resume Analytics Dashboard | Aggregated visual metrics, summary cards, scoring distribution, and synthesized insights | **Completed** |
 | Feature #29 | Skill Distribution | Visualizing extracted skills and category weighting | **Completed** |
-| Feature #30 | Resume Improvement Tracker | Tracking version-over-version score improvement | Planned |
+| Feature #30 | Resume Improvement Tracker | Tracking version-over-version score improvement, tasks, and history | **Completed** |
 | Feature #31 | AI Resume Report | Comprehensive text report generation | Planned |
 | Feature #32 | PDF Report Export | Client- and server-side PDF document generation | Planned |
 
@@ -82,4 +82,38 @@ Skills extracted from resumes are categorized deterministically into:
 - **Category Cards**:
   - Individual cards for each populated domain with domain icons, count badges, and expandable pill tags.
 - Integrated seamlessly into `ResumeAnalyticsDashboard.jsx`.
+
+---
+
+## Feature #30: Resume Improvement Tracker Architecture
+
+### 1. Overview & Data Model
+Tracks quality changes, recommendation progress, and version-over-version evolution:
+- **Snapshots (`resume_analysis_snapshots`)**: Stores historical scores (overall quality, ATS, readability, category scores, strengths/weaknesses counts) associated with resume versions. Never overwritten on subsequent analyses.
+- **Tasks (`resume_improvement_tasks`)**: Actionable improvement tasks created from Phase 4 recommendations, with section categorization, priority (`High`, `Medium`, `Low`), and status (`Pending`, `In Progress`, `Completed`). Completion timestamps and status changes are persisted in PostgreSQL.
+- **Timeline (`resume_timeline_events`)**: Chronological audit trail of milestone events (`RESUME_UPLOADED`, `RESUME_ANALYZED`, `TASK_CREATED`, `TASK_COMPLETED`, `TASK_REOPENED`, `VERSION_UPLOADED`, `VERSION_ANALYZED`) using real timestamps.
+
+### 2. API Endpoints
+- `GET /api/v1/resumes/{resume_id}/improvements` (and alias `GET /api/resumes/{resume_id}/improvements`): Complete tracker overview.
+- `GET /api/v1/resumes/{resume_id}/improvements/history` (and alias `GET /api/resumes/{resume_id}/improvements/history`): Chronological snapshot history.
+- `GET /api/v1/resumes/{resume_id}/improvements/tasks` (and alias `GET /api/resumes/{resume_id}/improvements/tasks`): Filterable tasks with progress metrics.
+- `PATCH /api/v1/resumes/{resume_id}/improvements/tasks/{task_id}` (and alias `PATCH /api/resumes/{resume_id}/improvements/tasks/{task_id}`): Update task status and priority.
+- `GET /api/v1/resumes/{resume_id}/improvements/compare` (and alias `GET /api/resumes/{resume_id}/improvements/compare`): Side-by-side version comparison.
+
+### 3. Progress Formula
+$$\text{Task Completion Percentage} = \left(\frac{\text{Completed Tasks}}{\text{Total Tasks}}\right) \times 100$$
+Task progress is clearly distinguished from score improvements (score deltas).
+
+### 4. Version Comparison
+- Metadata: Version numbers, upload timestamps, analysis timestamps.
+- Text statistics: Word count differences, character differences, line count differences.
+- Skills detected: Added skills, removed skills, retained skills.
+- Score deltas: Quality, ATS, and readability score comparisons.
+- Factual text change summary (avoids claiming quality improvements based only on score differences).
+
+### 5. Frontend Components
+- `ResumeImprovementTracker.jsx`: Embedded in `ResumeAnalyticsDashboard.jsx`.
+- `ResumeImprovementsPage.jsx`: Dedicated route `/resume/improvements` and `/resume/:resumeId/improvements`.
+- `improvementService.js`: Frontend API client methods.
+
 

@@ -230,6 +230,74 @@ Store only hashed reset tokens, not raw tokens.
 
 Scores must follow documented evaluation rules.
 
+## 7.4 resume_analysis_snapshots (Phase 5 | Feature 30)
+
+**Purpose:** Store immutable historical analysis snapshots across resume versions to track quality evolution over time.
+
+| Column | Data Type | Constraints |
+|---|---|---|
+| id | UUID | Primary Key |
+| resume_id | UUID | Foreign Key (resumes.id, CASCADE), Not Null |
+| resume_version_id | UUID | Foreign Key (resume_versions.id, SET NULL), Nullable |
+| version_number | INTEGER | Not Null, Default 1 |
+| overall_score | FLOAT | Nullable |
+| ats_score | FLOAT | Nullable |
+| readability_score | FLOAT | Nullable |
+| category_scores | JSONB | Not Null, Default '{}' |
+| strengths_count | INTEGER | Not Null, Default 0 |
+| weaknesses_count | INTEGER | Not Null, Default 0 |
+| snapshot_metadata | JSONB | Not Null, Default '{}' |
+| created_at | TIMESTAMPTZ | Not Null |
+
+**Indexes:**
+- `ix_resume_analysis_snapshots_resume_id` on `resume_id`
+- `ix_resume_analysis_snapshots_version` on `(resume_id, version_number)`
+
+## 7.5 resume_improvement_tasks (Phase 5 | Feature 30)
+
+**Purpose:** Persist actionable improvement tasks with priority, status tracking, and completion timestamps.
+
+| Column | Data Type | Constraints |
+|---|---|---|
+| id | UUID | Primary Key |
+| resume_id | UUID | Foreign Key (resumes.id, CASCADE), Not Null |
+| user_id | UUID | Foreign Key (users.id, SET NULL), Nullable |
+| title | VARCHAR(255) | Not Null |
+| description | TEXT | Not Null, Default '' |
+| section | VARCHAR(100) | Not Null, Default 'General' |
+| priority | VARCHAR(20) | Not Null, Default 'Medium' ('High', 'Medium', 'Low') |
+| status | VARCHAR(30) | Not Null, Default 'Pending' ('Pending', 'In Progress', 'Completed') |
+| source_recommendation_id | VARCHAR(100) | Nullable |
+| created_at | TIMESTAMPTZ | Not Null |
+| completed_at | TIMESTAMPTZ | Nullable |
+| updated_at | TIMESTAMPTZ | Not Null |
+
+**Indexes:**
+- `ix_resume_improvement_tasks_resume_id` on `resume_id`
+- `ix_resume_improvement_tasks_user_id` on `user_id`
+- `ix_resume_improvement_tasks_status` on `status`
+- `ix_resume_improvement_tasks_priority` on `priority`
+- `ix_resume_improvement_tasks_rec_id` on `(resume_id, source_recommendation_id)`
+
+## 7.6 resume_timeline_events (Phase 5 | Feature 30)
+
+**Purpose:** Maintain chronological audit trail of resume milestones with real timestamps.
+
+| Column | Data Type | Constraints |
+|---|---|---|
+| id | UUID | Primary Key |
+| resume_id | UUID | Foreign Key (resumes.id, CASCADE), Not Null |
+| user_id | UUID | Foreign Key (users.id, SET NULL), Nullable |
+| event_type | VARCHAR(50) | Not Null ('RESUME_UPLOADED', 'RESUME_ANALYZED', 'TASK_CREATED', 'TASK_COMPLETED', 'TASK_REOPENED', 'VERSION_UPLOADED', 'VERSION_ANALYZED') |
+| title | VARCHAR(255) | Not Null |
+| description | TEXT | Not Null, Default '' |
+| event_metadata | JSONB | Not Null, Default '{}' |
+| created_at | TIMESTAMPTZ | Not Null |
+
+**Indexes:**
+- `ix_resume_timeline_events_resume_id` on `resume_id`
+- `ix_resume_timeline_events_created_at` on `created_at`
+
 # 8. RESUME INTELLIGENCE TABLES
 
 ## 8.1 resume_personal_information (Phase 3 | Feature 13)

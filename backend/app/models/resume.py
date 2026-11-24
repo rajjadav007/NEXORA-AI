@@ -135,6 +135,24 @@ class Resume(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    improvement_snapshots = relationship(
+        "ResumeAnalysisSnapshot",
+        back_populates="resume",
+        cascade="all, delete-orphan",
+        order_by="ResumeAnalysisSnapshot.created_at.asc()",
+    )
+    improvement_tasks = relationship(
+        "ResumeImprovementTask",
+        back_populates="resume",
+        cascade="all, delete-orphan",
+        order_by="ResumeImprovementTask.created_at.asc()",
+    )
+    timeline_events = relationship(
+        "ResumeTimelineEvent",
+        back_populates="resume",
+        cascade="all, delete-orphan",
+        order_by="ResumeTimelineEvent.created_at.asc()",
+    )
 
 
 class ResumeVersion(Base):

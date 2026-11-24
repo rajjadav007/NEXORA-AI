@@ -9,6 +9,7 @@ import { DashboardPage } from '../pages/DashboardPage';
 import { ResumePage } from '../pages/ResumePage';
 import { ResumePreviewPage } from '../pages/ResumePreviewPage';
 import { ResumeAnalyticsPage } from '../pages/ResumeAnalyticsPage';
+import { ResumeImprovementsPage } from '../pages/ResumeImprovementsPage';
 import { JobsPage } from '../pages/JobsPage';
 import { EmployerPage } from '../pages/EmployerPage';
 import { MatchingPage } from '../pages/MatchingPage';
@@ -71,6 +72,14 @@ export const router = createBrowserRouter([
           {
             path: 'resume/:resumeId/analytics',
             element: <ResumeAnalyticsPage />,
+          },
+          {
+            path: 'resume/improvements',
+            element: <ResumeImprovementsPage />,
+          },
+          {
+            path: 'resume/:resumeId/improvements',
+            element: <ResumeImprovementsPage />,
           },
           {
             path: 'jobs',
