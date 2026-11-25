@@ -5,7 +5,7 @@ Phase 5 | Feature 31: AI Resume Report
 
 import logging
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Header
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Header, Response
 from sqlalchemy.orm import Session
 
 from app.core.security import verify_resume_access
@@ -189,3 +189,55 @@ def get_resume_report_by_id(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve report: {str(exc)}",
         )
+
+
+@router.get(
+    "/{resume_id}/reports/{report_id}/pdf",
+    summary="Export AI Resume Report as PDF",
+    description="Generates and downloads a publication-grade, multi-page PDF document for a saved AI Resume Report.",
+    response_class=Response,
+    responses={
+        200: {
+            "content": {"application/pdf": {}},
+            "description": "Returns the generated PDF binary stream.",
+        },
+        404: {"description": "Resume or report not found."},
+        400: {"description": "Invalid UUID format."},
+    },
+)
+def export_resume_report_pdf(
+    resume_id: str,
+    report_id: str,
+    user_id: Optional[str] = Query(None, description="Optional authenticated user ID query param"),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id", description="Optional authenticated user ID header"),
+    db: Session = Depends(get_db),
+):
+    """
+    Phase 5 | Feature 32: PDF Report Export
+    Exports saved AI Resume Report as professional PDF.
+    Does not regenerate AI report.
+    """
+    verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
+
+    export_result = resume_report_service.export_report_pdf(
+        resume_id=resume_id,
+        report_id=report_id,
+        db=db,
+        user_id=user_id or x_user_id,
+    )
+
+    pdf_bytes = export_result["pdf_bytes"]
+    filename = export_result["filename"]
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Length": str(len(pdf_bytes)),
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
+

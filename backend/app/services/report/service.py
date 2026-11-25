@@ -5,6 +5,7 @@ Phase 5 | Feature 31: AI Resume Report
 
 import uuid
 import time
+import re
 import logging
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
@@ -27,6 +28,7 @@ from app.services.report.ai_generator import (
     OllamaUnavailableError,
     AIOutputValidationError,
 )
+from app.services.report.pdf_generator import report_pdf_generator
 
 logger = logging.getLogger(__name__)
 
@@ -205,6 +207,83 @@ class ResumeReportService:
             )
 
         return history_items
+
+    def export_report_pdf(
+        self,
+        resume_id: str,
+        report_id: str,
+        db: Session,
+        user_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Exports an existing saved AI Resume Report as a professionally designed PDF.
+        Phase 5 | Feature 32: PDF Report Export
+        Never regenerates the AI report. Uses saved report and analytics data.
+        Returns a dict: {"pdf_bytes": bytes, "filename": str, "report_id": str}
+        """
+        resume = self._get_resume_with_relations(resume_id, db)
+
+        try:
+            report_uuid = uuid.UUID(report_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid report ID format: {report_id}",
+            )
+
+        report = db.execute(
+            select(ResumeReport).where(
+                and_(
+                    ResumeReport.id == report_uuid,
+                    ResumeReport.resume_id == resume.id,
+                )
+            )
+        ).scalar_one_or_none()
+
+        if not report:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Report with ID {report_id} not found.",
+            )
+
+        # Construct report_data directly from stored record, robust to optional section omission
+        raw_sections = report.report_data.get("sections") if isinstance(report.report_data, dict) and "sections" in report.report_data else (report.report_data or {})
+        report_data = {
+            "report_id": str(report.id),
+            "resume_id": str(report.resume_id),
+            "generated_at": report.created_at.isoformat() if report.created_at else "",
+            "model": report.model_name or "gemma4:12b",
+            "status": report.status or "COMPLETED",
+            "sections": raw_sections,
+            "generation_duration_seconds": report.generation_duration_seconds,
+        }
+
+        # Sanitize resume filename for safe Content-Disposition
+        raw_name = resume.original_filename or "resume"
+        if "." in raw_name:
+            raw_name = raw_name.rsplit(".", 1)[0]
+        clean_name = re.sub(r"[^\w\-]", "_", raw_name)
+        clean_name = re.sub(r"_+", "_", clean_name).strip("_") or "resume"
+        pdf_filename = f"Nexora_AI_Resume_Report_{clean_name}_{str(report.id)[:8]}.pdf"
+
+        # Generate PDF bytes via ReportLab
+        try:
+            pdf_bytes = report_pdf_generator.generate_pdf(
+                report_data=report_data,
+                resume_filename=resume.original_filename or "resume.pdf",
+            )
+        except Exception as exc:
+            logger.error("Failed to generate PDF for report %s: %s", report_id, exc, exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to generate PDF document: {str(exc)}",
+            )
+
+        return {
+            "pdf_bytes": pdf_bytes,
+            "filename": pdf_filename,
+            "report_id": str(report.id),
+        }
 
     # --- Structured Payload Extractors ---
 

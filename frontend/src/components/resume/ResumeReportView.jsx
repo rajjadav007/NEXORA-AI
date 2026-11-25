@@ -21,6 +21,8 @@ import {
   History,
   AlertCircle,
   Check,
+  Download,
+  FileDown,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -32,6 +34,7 @@ import {
   getResumeReportHistory,
   getLatestResumeReport,
   getResumeReportById,
+  exportResumeReportPdf,
 } from '../../services/reportService';
 import { cn } from '../../utils/cn';
 
@@ -75,6 +78,8 @@ export function ResumeReportView({ resumeId, className }) {
   const [history, setHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [downloadFeedback, setDownloadFeedback] = useState(null);
   const [error, setError] = useState(null);
   const [selectedReportId, setSelectedReportId] = useState('');
 
@@ -170,6 +175,34 @@ export function ResumeReportView({ resumeId, className }) {
     }
   };
 
+  // Trigger PDF Report Export (Feature #32)
+  const handleDownloadPdf = async () => {
+    if (!resumeId || !report?.report_id) return;
+    setIsExportingPdf(true);
+    setError(null);
+    setDownloadFeedback(null);
+
+    try {
+      const { blob, filename } = await exportResumeReportPdf(resumeId, report.report_id);
+
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+
+      setDownloadFeedback(`PDF successfully downloaded: ${filename}`);
+      setTimeout(() => setDownloadFeedback(null), 6000);
+    } catch (err) {
+      setError(err.message || 'Failed to download report PDF. Please try again.');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <Card className="border-slate-200 shadow-sm bg-white p-8">
@@ -227,11 +260,25 @@ export function ResumeReportView({ resumeId, className }) {
                 </div>
               )}
 
+              {/* Download PDF Export Button (Feature #32) */}
+              {report && (
+                <Button
+                  size="sm"
+                  onClick={handleDownloadPdf}
+                  disabled={isExportingPdf || isGenerating}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm"
+                  title="Download complete multi-page assessment report as PDF"
+                >
+                  <Download className={cn('w-3.5 h-3.5', isExportingPdf && 'animate-bounce')} />
+                  {isExportingPdf ? 'Generating PDF...' : 'Download PDF'}
+                </Button>
+              )}
+
               {/* Generate or Regenerate Button */}
               <Button
                 size="sm"
                 onClick={() => handleGenerate(report ? true : false)}
-                disabled={isGenerating}
+                disabled={isGenerating || isExportingPdf}
                 className="bg-teal-500 hover:bg-teal-600 text-slate-950 font-semibold text-xs flex items-center gap-1.5 shadow-sm"
               >
                 <RefreshCw className={cn('w-3.5 h-3.5', isGenerating && 'animate-spin')} />
@@ -256,6 +303,23 @@ export function ResumeReportView({ resumeId, className }) {
           )}
         </div>
       </Card>
+
+      {/* DOWNLOAD SUCCESS FEEDBACK */}
+      {downloadFeedback && (
+        <Alert variant="success" title="PDF Export Complete">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-emerald-800">{downloadFeedback}</p>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleDownloadPdf}
+              className="text-xs ml-4 border-emerald-300 text-emerald-900 hover:bg-emerald-100"
+            >
+              <RefreshCw className="w-3 h-3 mr-1" /> Download Again
+            </Button>
+          </div>
+        </Alert>
+      )}
 
       {/* ERROR ALERT */}
       {error && (

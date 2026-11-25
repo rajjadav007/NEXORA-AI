@@ -1826,6 +1826,30 @@ Track resume quality evolution, score comparisons, improvement tasks, timeline m
 
 **Response Payload (`200 OK`):** Returns the specific historical structured report envelope.
 
+### 8.8.3.5 Export AI Resume Report as PDF (Feature #32)
+
+**Endpoint:** `/resumes/{resume_id}/reports/{report_id}/pdf` (also accessible via `/api/resumes/{resume_id}/reports/{report_id}/pdf` and `/api/v1/resumes/{resume_id}/reports/{report_id}/pdf`)
+
+**Method:** GET
+
+**Access:** Owner Only
+
+**Description:** Generates and downloads a publication-grade, multi-page PDF document for a saved AI Resume Report using ReportLab. Renders an exact 6-page professional SaaS document including Cover & Executive Overview, Resume Quality Analysis, Skills Distribution, Strengths & Weaknesses, Experience & Project Intelligence, and ATS Compliance & Recommendations.
+
+**Headers:**
+- `X-User-Id` (Optional Header): UUID of authenticated user for ownership verification.
+
+**Response (`200 OK`):**
+- **Content-Type:** `application/pdf`
+- **Content-Disposition:** `attachment; filename="Nexora_AI_Resume_Report_{filename}_{report_id[:8]}.pdf"`
+- **Body:** Binary PDF byte stream.
+
+**Error Responses:**
+- `400 Bad Request`: Invalid UUID format for `resume_id` or `report_id`.
+- `403 Forbidden`: User does not own the requested resume or report.
+- `404 Not Found`: Resume or report with given ID does not exist.
+- `500 Internal Server Error`: PDF compilation or rendering failure.
+
 ## 8.9 Export Resume Report
 
 **Endpoint:** `/resume-analysis/{resume_id}/export`

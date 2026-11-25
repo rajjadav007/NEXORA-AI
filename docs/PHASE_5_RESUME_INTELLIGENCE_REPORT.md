@@ -10,7 +10,7 @@ Phase 5 delivers visual analytics, reporting, and export capabilities based on P
 | Feature #29 | Skill Distribution | Visualizing extracted skills and category weighting | **Completed** |
 | Feature #30 | Resume Improvement Tracker | Tracking version-over-version score improvement, tasks, and history | **Completed** |
 | Feature #31 | AI Resume Report | Comprehensive text report generation | **Completed** |
-| Feature #32 | PDF Report Export | Client- and server-side PDF document generation | Planned |
+| Feature #32 | PDF Report Export | Client- and server-side PDF document generation | **Completed** |
 
 ## Feature #28: Resume Analytics Dashboard Architecture
 
@@ -164,6 +164,55 @@ Provides an AI-powered, multi-dimensional assessment of candidate resumes, synth
 - `ResumeReportView.jsx`: Responsive multi-card report presentation component.
 - `ResumeReportPage.jsx`: Dedicated route `/resume/report` and `/resume/:resumeId/report`.
 - `reportService.js`: API service methods with comprehensive error handling.
+
+---
+
+## Feature #32: PDF Report Export Architecture
+
+### 1. Document Architecture & Styling
+- **Engine**: ReportLab (`reportlab>=5.1.0`) with Platypus layout primitives (`SimpleDocTemplate`, `Paragraph`, `Table`, `PageBreak`, `Spacer`, `HRFlowable`).
+- **Canvas**: Custom `NumberedCanvas` utilizing two-pass rendering for accurate dynamic page numbering (`Page X of Y`), running headers on pages 2+, and running footers on all pages.
+- **Page Format**: Standard international A4 (595.27 x 841.89 pt) with 40pt left/right margins (515.27 pt printable content width).
+- **Branding**: Nexora AI SaaS design system with Deep Navy (`#0f172a`), Indigo Accent (`#4f46e5`), Slate Neutrals (`#1e293b`, `#64748b`, `#e2e8f0`), Emerald (`#059669`), and Rose (`#e11d48`).
+- **Safety**: Safe XML escaping (`xml.sax.saxutils.escape`) on all user text before injecting into flowables to guarantee protection against XML parsing crashes.
+
+### 2. Multi-Page Document Layout
+1. **Page 1: Cover and Overview**:
+   - Nexora AI header eyebrow & branding.
+   - Resume filename, report ID, generation date, and model identifier metadata card.
+   - Overall Quality Score highlight card (`score / 100`, grade, status description).
+   - Executive Summary: Overall assessment narrative, key strengths bullet list, primary attention areas bullet list, and strategic direction box.
+2. **Page 2: Resume Quality Analysis**:
+   - 4-Column Score Card Grid (Overall Quality, ATS Compatibility, Readability, Content Completeness).
+   - Metric Definitions & Scoring Criteria table.
+   - Evaluator narrative assessment box.
+3. **Page 3: Skills Analysis & Category Distribution**:
+   - Categorized skills table (Programming Languages, AI & ML, Frameworks & Libraries, Core Technical Skills).
+   - Skill distribution observations narrative.
+   - Canonical 8-Category distribution breakdown table from Feature #29 data.
+4. **Page 4: Strengths and Weaknesses**:
+   - Genuine resume strengths table (Title, Section, Evidence, Impact).
+   - Identified weaknesses & content gaps table (Issue, Section, Severity, Actionable Remedy).
+5. **Page 5: Experience, Projects & Academic Evaluation**:
+   - Professional experience review table (Roles evaluated, metrics density, responsibilities, presentation).
+   - Project intelligence & engineering rigor table (Projects analyzed, tech stack, problem statements, measurable outcomes).
+   - Education & credentials assessment table (Degrees, presentation, certifications).
+6. **Page 6: ATS Compliance & Strategic Recommendations**:
+   - ATS assessment & keyword coverage box.
+   - Prioritized improvement recommendations table (Priority badge, Section, Recommendation, Actionable Step).
+   - Top 5 immediate strategic actions list.
+   - Final executive takeaway conclusion.
+
+### 3. API Endpoints
+- `GET /api/v1/resumes/{resume_id}/reports/{report_id}/pdf`
+- Aliases:
+  - `GET /api/resumes/{resume_id}/reports/{report_id}/pdf`
+  - `GET /resumes/{resume_id}/reports/{report_id}/pdf`
+- Returns binary stream (`application/pdf`) with `Content-Disposition: attachment; filename="Nexora_AI_Resume_Report_{filename}_{report_id[:8]}.pdf"`.
+
+### 4. Zero Regeneration Guarantee
+- Uses strictly saved reports from `ResumeReport` database records; never invokes Ollama or alters existing findings during export.
+
 
 
 

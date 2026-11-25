@@ -68,4 +68,15 @@ This document tracks implemented features across stages and phases of Nexora AI.
   - Persisted in PostgreSQL `resume_reports` table preserving historical reports, model metadata, and generation runtimes.
   - REST endpoints under `/api/resumes/{resume_id}/reports` (generate, history, latest, get by id) with authenticated user & resume ownership enforcement.
   - Clean, responsive React frontend report interface with executive summary cards, detailed section breakdowns, report history picker, and regeneration capabilities.
-- Feature #32: PDF Report Export (Pending)
+- **Feature #32: PDF Report Export (Completed)**
+  - Publication-grade multi-page PDF generation engine built with ReportLab (`ReportPDFGenerator`), rendering exact A4 dimensions, running headers, footers with dynamic page numbering ("Page X of Y" via two-pass `NumberedCanvas`), and SaaS branding.
+  - Generates an exact 6-page comprehensive assessment report:
+    1. Page 1: Cover & Overview (Branding, Resume file, Generated date, Report ID, Overall score highlight badge, Executive summary).
+    2. Page 2: Resume Quality Analysis (4-metric score cards: Overall Quality, ATS Compatibility, Readability, Completeness, metric definitions table, and evaluator narrative).
+    3. Page 3: Skills Analysis & Category Distribution (Categorized competencies table, skill observations, and canonical 8-category breakdown from Feature #29).
+    4. Page 4: Strengths and Weaknesses (Genuine prioritized strengths with evidence/impact and identified weaknesses with severity and actionable remedies).
+    5. Page 5: Experience, Projects & Academic Evaluation (Roles reviewed, metrics density, project technical depth, outcomes, and accredited education).
+    6. Page 6: ATS Compliance & Strategic Recommendations (ATS score box, keyword coverage, prioritized recommendations by High/Medium/Low, top 5 strategic actions, and final conclusion).
+  - Backend endpoint `GET /api/resumes/{resume_id}/reports/{report_id}/pdf` with authentication verification, resume/report ownership enforcement, and sanitized Content-Disposition attachment headers.
+  - Zero AI regeneration on export: exports existing saved reports without re-running models or altering content.
+  - Seamless frontend integration into `ResumeReportView.jsx` and `reportService.js` with instant download feedback, loading indicators, and retry functionality.

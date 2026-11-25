@@ -5,14 +5,16 @@ import {
   getResumeReportHistory,
   getLatestResumeReport,
   getResumeReportById,
+  exportResumeReportPdf,
 } from '../src/services/reportService.js';
 
-describe('reportService - Feature 31 AI Resume Report', () => {
-  it('exports all Feature 31 report service functions', () => {
+describe('reportService - Feature 31 AI Resume Report & Feature 32 PDF Export', () => {
+  it('exports all report service functions', () => {
     assert.strictEqual(typeof generateResumeReport, 'function');
     assert.strictEqual(typeof getResumeReportHistory, 'function');
     assert.strictEqual(typeof getLatestResumeReport, 'function');
     assert.strictEqual(typeof getResumeReportById, 'function');
+    assert.strictEqual(typeof exportResumeReportPdf, 'function');
   });
 
   it('generateResumeReport throws error when resumeId is missing', async () => {
@@ -153,5 +155,79 @@ describe('reportService - Feature 31 AI Resume Report', () => {
         message: 'resumeId and reportId are required to fetch report.',
       }
     );
+  });
+
+  it('exportResumeReportPdf throws when resumeId or reportId is missing', async () => {
+    await assert.rejects(
+      async () => {
+        await exportResumeReportPdf(null, 'report-123');
+      },
+      {
+        message: 'resumeId is required to export report PDF.',
+      }
+    );
+
+    await assert.rejects(
+      async () => {
+        await exportResumeReportPdf('resume-xyz', null);
+      },
+      {
+        message: 'reportId is required to export report PDF.',
+      }
+    );
+  });
+
+  it('exportResumeReportPdf fetches PDF stream and parses Content-Disposition filename', async () => {
+    const originalFetch = global.fetch;
+    let requestedUrl = '';
+
+    global.fetch = async (url) => {
+      requestedUrl = url;
+      return {
+        ok: true,
+        headers: {
+          get: (headerName) => {
+            if (headerName.toLowerCase() === 'content-disposition') {
+              return 'attachment; filename="Nexora_AI_Resume_Report_custom_marcus_12345678.pdf"';
+            }
+            return null;
+          },
+        },
+        blob: async () => new Blob(['%PDF-1.4 test'], { type: 'application/pdf' }),
+      };
+    };
+
+    try {
+      const res = await exportResumeReportPdf('resume-xyz', 'report-12345678');
+      assert(requestedUrl.includes('/resumes/resume-xyz/reports/report-12345678/pdf'));
+      assert.strictEqual(res.filename, 'Nexora_AI_Resume_Report_custom_marcus_12345678.pdf');
+      assert(res.blob instanceof Blob);
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  it('exportResumeReportPdf throws descriptive error on server failure', async () => {
+    const originalFetch = global.fetch;
+    global.fetch = async () => ({
+      ok: false,
+      status: 404,
+      json: async () => ({ detail: 'Report with ID report-999 not found.' }),
+    });
+
+    try {
+      await assert.rejects(
+        async () => {
+          await exportResumeReportPdf('resume-xyz', 'report-999');
+        },
+        (err) => {
+          assert.strictEqual(err.status, 404);
+          assert(err.message.includes('not found'));
+          return true;
+        }
+      );
+    } finally {
+      global.fetch = originalFetch;
+    }
   });
 });
