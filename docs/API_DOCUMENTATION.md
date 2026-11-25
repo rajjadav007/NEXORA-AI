@@ -1875,16 +1875,28 @@ Response:
 
 **Method:** POST
 
-**Access:** Authenticated
+**Access:** Authenticated (`X-User-Id` header or `user_id` query parameter)
 
 Request:
 
 ```json
 {
   "job_title": "AI Engineer Intern",
-  "description": "We are looking for a candidate with Python, machine learning and NLP experience."
+  "company_name": "Nexora Labs",
+  "description": "We are looking for a candidate with Python, machine learning, NLP, and FastAPI experience to build scalable AI workflows.",
+  "location": "Remote",
+  "employment_type": "Internship"
 }
 ```
+
+Validation & Behavior:
+- `job_title`: Required, 2–255 characters.
+- `company_name`: Required, 2–255 characters.
+- `description`: Required, 50–15,000 characters (trimmed).
+- `location`: Optional, max 255 characters.
+- `employment_type`: Optional (`Full-time`, `Part-time`, `Contract`, `Internship`, `Temporary`, `Freelance`).
+- Duplicate submissions for the same user return `409 Conflict`.
+- Returns `201 Created` with persisted record (`source_type: "manual"`, `analysis_status: "PENDING"`).
 
 ## 9.2 Import Job Description URL
 

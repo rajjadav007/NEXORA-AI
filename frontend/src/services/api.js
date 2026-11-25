@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '../config/constants';
+import { API_BASE_URL } from '../config/constants.js';
 
 /**
  * Base HTTP request helper
@@ -17,7 +17,15 @@ export async function apiRequest(endpoint, options = {}) {
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
-    throw new Error(errorBody.detail || errorBody.message || `Request failed with status ${response.status}`);
+    let message = errorBody.message || `Request failed with status ${response.status}`;
+    if (typeof errorBody.detail === 'string') {
+      message = errorBody.detail;
+    } else if (Array.isArray(errorBody.detail) && errorBody.detail.length > 0) {
+      message = errorBody.detail.map((item) => item.msg || JSON.stringify(item)).join('; ');
+    }
+    const error = new Error(message);
+    error.status = response.status;
+    throw error;
   }
 
   return response.json();

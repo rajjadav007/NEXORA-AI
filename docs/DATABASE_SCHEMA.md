@@ -604,23 +604,28 @@ Company records should be deduplicated using suitable identifiers and normalized
 
 ## 10.3 job_descriptions
 
-**Purpose:** Store analyzed job descriptions.
+**Purpose:** Store submitted and analyzed job descriptions (Phase 6, Features 33–38).
 
 | Column | Data Type | Constraints |
 |---|---|---|
 | id | UUID | Primary Key |
-| user_id | UUID | Foreign Key, Nullable |
-| company_id | UUID | Foreign Key, Nullable |
+| user_id | UUID | Foreign Key (`users.id`), Nullable, Indexed |
 | job_title | VARCHAR(255) | Not Null |
+| company_name | VARCHAR(255) | Not Null |
 | raw_description | TEXT | Not Null |
-| source_url | TEXT | Nullable |
 | location | VARCHAR(255) | Nullable |
+| employment_type | VARCHAR(50) | Nullable |
+| source_url | TEXT | Nullable |
+| source_type | VARCHAR(30) | Not Null, Default `'manual'` |
+| analysis_status | VARCHAR(30) | Not Null, Default `'PENDING'` |
+| content_hash | VARCHAR(64) | Not Null, Indexed |
 | experience_required | VARCHAR(100) | Nullable |
 | education_required | TEXT | Nullable |
-| requirements | JSONB | Not Null |
-| mandatory_skills | JSONB | Default Empty Array |
-| preferred_skills | JSONB | Default Empty Array |
+| requirements | JSONB | Not Null, Default `'[]'` |
+| mandatory_skills | JSONB | Not Null, Default `'[]'` |
+| preferred_skills | JSONB | Not Null, Default `'[]'` |
 | created_at | TIMESTAMPTZ | Not Null |
+| updated_at | TIMESTAMPTZ | Not Null |
 
 ## 10.4 jobs
 
