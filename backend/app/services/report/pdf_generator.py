@@ -12,92 +12,123 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any
 from xml.sax.saxutils import escape as xml_escape
 
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.lib.units import mm
-from reportlab.platypus import (
-    SimpleDocTemplate,
-    Paragraph,
-    Spacer,
-    Table,
-    TableStyle,
-    PageBreak,
-    KeepTogether,
-    HRFlowable,
-)
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.pdfgen import canvas
+try:
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.units import mm
+    from reportlab.platypus import (
+        SimpleDocTemplate,
+        Paragraph,
+        Spacer,
+        Table,
+        TableStyle,
+        PageBreak,
+        KeepTogether,
+        HRFlowable,
+    )
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.pdfgen import canvas
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
+    A4 = (595.27, 841.89)
+    colors = None
+    canvas = None
 
 
 # --- Color Palette (Nexora AI SaaS Branding) ---
-HEX_PRIMARY_DARK = colors.HexColor("#0f172a")    # Slate 900
-HEX_SLATE_800    = colors.HexColor("#1e293b")    # Slate 800
-HEX_SLATE_700    = colors.HexColor("#334155")    # Slate 700
-HEX_SLATE_500    = colors.HexColor("#64748b")    # Slate 500
-HEX_SLATE_200    = colors.HexColor("#e2e8f0")    # Slate 200 (borders)
-HEX_SLATE_100    = colors.HexColor("#f1f5f9")    # Slate 100 (subtle background)
-HEX_SLATE_50     = colors.HexColor("#f8fafc")    # Slate 50
-HEX_INDIGO_600   = colors.HexColor("#4f46e5")    # Indigo Accent
-HEX_INDIGO_50    = colors.HexColor("#eef2ff")    # Indigo Background
-HEX_TEAL_600     = colors.HexColor("#0d9488")    # Teal Accent
-HEX_TEAL_50      = colors.HexColor("#f0fdfa")    # Teal Background
-HEX_EMERALD_600  = colors.HexColor("#059669")    # Success / High Score
-HEX_EMERALD_50   = colors.HexColor("#ecfdf5")    # Success Background
-HEX_AMBER_600    = colors.HexColor("#d97706")    # Warning / Medium Score
-HEX_AMBER_50     = colors.HexColor("#fffbeb")    # Warning Background
-HEX_ROSE_600     = colors.HexColor("#e11d48")    # Alert / Weakness
-HEX_ROSE_50      = colors.HexColor("#fff1f2")    # Alert Background
-HEX_WHITE        = colors.HexColor("#ffffff")
+if REPORTLAB_AVAILABLE:
+    HEX_PRIMARY_DARK = colors.HexColor("#0f172a")    # Slate 900
+    HEX_SLATE_800    = colors.HexColor("#1e293b")    # Slate 800
+    HEX_SLATE_700    = colors.HexColor("#334155")    # Slate 700
+    HEX_SLATE_500    = colors.HexColor("#64748b")    # Slate 500
+    HEX_SLATE_200    = colors.HexColor("#e2e8f0")    # Slate 200 (borders)
+    HEX_SLATE_100    = colors.HexColor("#f1f5f9")    # Slate 100 (subtle background)
+    HEX_SLATE_50     = colors.HexColor("#f8fafc")    # Slate 50
+    HEX_INDIGO_600   = colors.HexColor("#4f46e5")    # Indigo Accent
+    HEX_INDIGO_50    = colors.HexColor("#eef2ff")    # Indigo Background
+    HEX_TEAL_600     = colors.HexColor("#0d9488")    # Teal Accent
+    HEX_TEAL_50      = colors.HexColor("#f0fdfa")    # Teal Background
+    HEX_EMERALD_600  = colors.HexColor("#059669")    # Success / High Score
+    HEX_EMERALD_50   = colors.HexColor("#ecfdf5")    # Success Background
+    HEX_AMBER_600    = colors.HexColor("#d97706")    # Warning / Medium Score
+    HEX_AMBER_50     = colors.HexColor("#fffbeb")    # Warning Background
+    HEX_ROSE_600     = colors.HexColor("#e11d48")    # Alert / Weakness
+    HEX_ROSE_50      = colors.HexColor("#fff1f2")    # Alert Background
+    HEX_WHITE        = colors.HexColor("#ffffff")
+else:
+    HEX_PRIMARY_DARK = None
+    HEX_SLATE_800 = None
+    HEX_SLATE_700 = None
+    HEX_SLATE_500 = None
+    HEX_SLATE_200 = None
+    HEX_SLATE_100 = None
+    HEX_SLATE_50 = None
+    HEX_INDIGO_600 = None
+    HEX_INDIGO_50 = None
+    HEX_TEAL_600 = None
+    HEX_TEAL_50 = None
+    HEX_EMERALD_600 = None
+    HEX_EMERALD_50 = None
+    HEX_AMBER_600 = None
+    HEX_AMBER_50 = None
+    HEX_ROSE_600 = None
+    HEX_ROSE_50 = None
+    HEX_WHITE = None
 
 
-class NumberedCanvas(canvas.Canvas):
-    """
-    Two-pass canvas for dynamic total page count ('Page X of Y')
-    and professional running headers and footers.
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._saved_page_states = []
+if REPORTLAB_AVAILABLE:
+    class NumberedCanvas(canvas.Canvas):
+        """
+        Two-pass canvas for dynamic total page count ('Page X of Y')
+        and professional running headers and footers.
+        """
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._saved_page_states = []
 
-    def showPage(self):
-        self._saved_page_states.append(dict(self.__dict__))
-        self._startPage()
+        def showPage(self):
+            self._saved_page_states.append(dict(self.__dict__))
+            self._startPage()
 
-    def save(self):
-        num_pages = len(self._saved_page_states)
-        for state in self._saved_page_states:
-            self.__dict__.update(state)
-            self.draw_decorations(num_pages)
-            super().showPage()
-        super().save()
+        def save(self):
+            num_pages = len(self._saved_page_states)
+            for state in self._saved_page_states:
+                self.__dict__.update(state)
+                self.draw_decorations(num_pages)
+                super().showPage()
+            super().save()
 
-    def draw_decorations(self, total_pages: int):
-        self.saveState()
-        width, height = self._pagesize
+        def draw_decorations(self, total_pages: int):
+            self.saveState()
+            width, height = self._pagesize
 
-        # Running Header (pages 2+)
-        if self._pageNumber > 1:
-            self.setFont("Helvetica-Bold", 8)
-            self.setFillColor(HEX_INDIGO_600)
-            self.drawString(40, height - 28, "NEXORA AI")
+            # Running Header (pages 2+)
+            if self._pageNumber > 1:
+                self.setFont("Helvetica-Bold", 8)
+                self.setFillColor(HEX_INDIGO_600)
+                self.drawString(40, height - 28, "NEXORA AI")
+                self.setFont("Helvetica", 8)
+                self.setFillColor(HEX_SLATE_500)
+                self.drawString(98, height - 28, "|   AI Resume Evaluation Assessment Report")
+                self.setStrokeColor(HEX_SLATE_200)
+                self.setLineWidth(0.6)
+                self.line(40, height - 34, width - 40, height - 34)
+
+            # Running Footer (all pages)
             self.setFont("Helvetica", 8)
             self.setFillColor(HEX_SLATE_500)
-            self.drawString(98, height - 28, "|   AI Resume Evaluation Assessment Report")
+            self.drawString(40, 24, "Confidential - Powered by Nexora AI Resume Intelligence")
+            page_str = f"Page {self._pageNumber} of {total_pages}"
+            self.drawRightString(width - 40, 24, page_str)
             self.setStrokeColor(HEX_SLATE_200)
             self.setLineWidth(0.6)
-            self.line(40, height - 34, width - 40, height - 34)
+            self.line(40, 34, width - 40, 34)
 
-        # Running Footer (all pages)
-        self.setFont("Helvetica", 8)
-        self.setFillColor(HEX_SLATE_500)
-        self.drawString(40, 24, "Confidential - Powered by Nexora AI Resume Intelligence")
-        page_str = f"Page {self._pageNumber} of {total_pages}"
-        self.drawRightString(width - 40, 24, page_str)
-        self.setStrokeColor(HEX_SLATE_200)
-        self.setLineWidth(0.6)
-        self.line(40, 34, width - 40, 34)
-
-        self.restoreState()
+            self.restoreState()
+else:
+    class NumberedCanvas:
+        pass
 
 
 class ReportPDFGenerator:
@@ -107,7 +138,8 @@ class ReportPDFGenerator:
     """
 
     def __init__(self):
-        self._setup_styles()
+        if REPORTLAB_AVAILABLE:
+            self._setup_styles()
 
     def _setup_styles(self):
         base_styles = getSampleStyleSheet()
@@ -249,6 +281,12 @@ class ReportPDFGenerator:
         """
         Builds and returns the full multi-page PDF as bytes.
         """
+        if not REPORTLAB_AVAILABLE:
+            raise RuntimeError(
+                "ReportLab is not installed in the active Python environment. "
+                "Please run: pip install reportlab"
+            )
+
         buf = io.BytesIO()
 
         # Printable width: 595.27 (A4) - 40 - 40 = 515.27 pt
