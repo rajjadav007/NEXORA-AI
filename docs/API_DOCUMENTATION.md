@@ -1904,22 +1904,23 @@ Validation & Behavior:
 
 **Method:** POST
 
-**Access:** Authenticated
+**Access:** Authenticated (`X-User-Id` header or `user_id` query parameter)
 
 Request:
 
 ```json
 {
-  "url": "https://example.com/careers/ai-engineer-intern"
+  "url": "https://careers.example.com/jobs/ai-engineer-intern"
 }
 ```
 
-Requirements:
-- Process only supported, accessible URLs.
-- Validate URLs to reduce server-side request forgery risks.
-- Respect website access restrictions.
-- Report extraction failures clearly.
-- Preserve the original source URL.
+Requirements & Security:
+- Accepts only HTTP/HTTPS URLs on ports 80/443 without embedded credentials.
+- Prevents SSRF by blocking localhost, private/loopback/link-local IPs, cloud metadata endpoints, and re-validating every redirect hop.
+- Enforces request timeouts (10s total / 5s connect), HTML content-type validation, and a 2 MB response size limit.
+- Extracts structured metadata (JSON-LD `JobPosting`, Open Graph, and sanitized HTML fallbacks) for preview and editing before saving via `POST /job-descriptions`.
+- Detects duplicate URLs per user (`409 Conflict`).
+- Reports login-required, CAPTCHA-protected, or inaccessible pages (`422`/`502`/`504`) so users can fall back to manual input.
 
 ## 9.3 Analyze Job Description
 

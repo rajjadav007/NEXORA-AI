@@ -46,6 +46,7 @@ class JobDescription(Base):
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
 
     experience_required: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    salary_info: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     education_required: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     requirements: Mapped[List[Any]] = mapped_column(
         JSONB().with_variant(JSON(), "sqlite"), default=list, nullable=False

@@ -4,11 +4,15 @@ import {
   JD_MIN_LENGTH,
   JD_MAX_LENGTH,
   EMPLOYMENT_TYPES,
+  validateJobUrl,
   validateJobDescriptionInput,
+  importJobDescriptionFromUrl,
   createJobDescription,
   listJobDescriptions,
   getJobDescriptionById,
   deleteJobDescription,
+  extractJobRoleAnalysis,
+  getJobRoleAnalysis,
 } from '../src/services/jobDescriptionService.js';
 
 const VALID_DESC =
@@ -172,6 +176,71 @@ describe('jobDescriptionService - Feature 33 Job Description Input', () => {
 
       await assert.rejects(() => getJobDescriptionById(''), /required/);
       await assert.rejects(() => deleteJobDescription(''), /required/);
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  it('validateJobUrl and importJobDescriptionFromUrl enforce URL safety and call /import', async () => {
+    assert.strictEqual(validateJobUrl('').isValid, false);
+    assert.strictEqual(validateJobUrl('ftp://example.com/job').isValid, false);
+    assert.strictEqual(validateJobUrl('http://localhost/job').isValid, false);
+    assert.strictEqual(validateJobUrl('http://169.254.169.254/latest').isValid, false);
+    assert.strictEqual(validateJobUrl('https://careers.example.com/jobs/1').isValid, true);
+
+    const originalFetch = global.fetch;
+    let calledUrl = '';
+    global.fetch = async (url, opts) => {
+      calledUrl = url;
+      assert.strictEqual(opts.method, 'POST');
+      return {
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: { job_title: 'AI Engineer', source_url: 'https://careers.example.com/jobs/1' },
+        }),
+      };
+    };
+
+    try {
+      await assert.rejects(() => importJobDescriptionFromUrl('http://127.0.0.1/job'), /Localhost/);
+      const res = await importJobDescriptionFromUrl('https://careers.example.com/jobs/1', 'user-1');
+      assert.ok(calledUrl.endsWith('/job-descriptions/import'));
+      assert.strictEqual(res.data.job_title, 'AI Engineer');
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  it('extractJobRoleAnalysis and getJobRoleAnalysis call role-analysis endpoints', async () => {
+    const originalFetch = global.fetch;
+    const calls = [];
+    global.fetch = async (url, opts) => {
+      calls.push({ url, method: opts.method, headers: opts.headers });
+      return {
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: { standardized_role: 'AI Engineer', seniority: 'Internship', confidence_score: 0.92 },
+        }),
+      };
+    };
+
+    try {
+      await assert.rejects(() => extractJobRoleAnalysis(''), /required/);
+      await assert.rejects(() => getJobRoleAnalysis(''), /required/);
+
+      const postRes = await extractJobRoleAnalysis('jd-123', { forceRecalculate: true, userId: 'user-1' });
+      const getRes = await getJobRoleAnalysis('jd-123', 'user-1');
+
+      assert.strictEqual(postRes.data.standardized_role, 'AI Engineer');
+      assert.strictEqual(getRes.data.seniority, 'Internship');
+      assert.strictEqual(calls.length, 2);
+      assert.ok(calls[0].url.endsWith('/job-descriptions/jd-123/role-analysis?force_recalculate=true'));
+      assert.strictEqual(calls[0].method, 'POST');
+      assert.ok(calls[1].url.endsWith('/job-descriptions/jd-123/role-analysis'));
+      assert.strictEqual(calls[1].method, 'GET');
+      assert.ok(calls.every((c) => c.headers['X-User-Id'] === 'user-1'));
     } finally {
       global.fetch = originalFetch;
     }

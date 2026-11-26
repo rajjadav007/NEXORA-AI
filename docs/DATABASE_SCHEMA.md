@@ -620,6 +620,7 @@ Company records should be deduplicated using suitable identifiers and normalized
 | analysis_status | VARCHAR(30) | Not Null, Default `'PENDING'` |
 | content_hash | VARCHAR(64) | Not Null, Indexed |
 | experience_required | VARCHAR(100) | Nullable |
+| salary_info | VARCHAR(255) | Nullable |
 | education_required | TEXT | Nullable |
 | requirements | JSONB | Not Null, Default `'[]'` |
 | mandatory_skills | JSONB | Not Null, Default `'[]'` |

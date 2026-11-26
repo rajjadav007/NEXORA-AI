@@ -22,6 +22,7 @@ from app.models.improvement_tracker import (
 )
 from app.models.report import ResumeReport
 from app.models.job_description import JobDescription
+from app.models.job_role_analysis import JobRoleAnalysis
 
 __all__ = [
     "Base",
@@ -50,4 +51,5 @@ __all__ = [
     "ResumeTimelineEvent",
     "ResumeReport",
     "JobDescription",
+    "JobRoleAnalysis",
 ]

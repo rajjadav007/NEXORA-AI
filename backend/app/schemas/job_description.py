@@ -4,7 +4,7 @@ Phase 6 | Feature 33: Job Description Input
 """
 
 from datetime import datetime
-from typing import Annotated, List, Optional
+from typing import Annotated, List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
 JD_MIN_LENGTH = 50
@@ -59,9 +59,35 @@ class JobDescriptionCreateRequest(BaseModel):
         description="Optional employment type",
     )
 
-    @field_validator("location", mode="before")
+    source_url: Optional[str] = Field(
+        default=None,
+        max_length=2048,
+        description="Optional source URL when imported from a job posting",
+    )
+
+    source_type: Literal["manual", "url"] = Field(
+        default="manual",
+        description="Origin of the job description (manual or url)",
+    )
+
+    experience_required: Optional[str] = Field(
+        default=None,
+        max_length=100,
+        description="Optional experience requirement extracted from posting",
+    )
+
+    salary_info: Optional[str] = Field(
+        default=None,
+        max_length=255,
+        description="Optional salary information extracted from posting",
+    )
+
+    mandatory_skills: List[str] = Field(default_factory=list)
+    preferred_skills: List[str] = Field(default_factory=list)
+
+    @field_validator("location", "source_url", "experience_required", "salary_info", mode="before")
     @classmethod
-    def normalize_location(cls, value: Optional[str]) -> Optional[str]:
+    def normalize_optional_str(cls, value: Optional[str]) -> Optional[str]:
         if value is None:
             return None
         cleaned = str(value).strip()
@@ -98,8 +124,45 @@ class JobDescriptionData(BaseModel):
     source_url: Optional[str] = None
     source_type: str = "manual"
     analysis_status: str = "PENDING"
+    experience_required: Optional[str] = None
+    salary_info: Optional[str] = None
+    mandatory_skills: List[str] = Field(default_factory=list)
+    preferred_skills: List[str] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
+
+
+class JobDescriptionImportRequest(BaseModel):
+    """Request payload for importing a job description from a public URL."""
+
+    url: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True, min_length=1, max_length=2048),
+    ] = Field(..., description="Public HTTP/HTTPS URL of the job posting")
+
+
+class JobDescriptionImportPreviewData(BaseModel):
+    """Extracted job fields previewed before saving."""
+
+    source_url: str
+    source_platform: str
+    extraction_method: str
+    job_title: Optional[str] = None
+    company_name: Optional[str] = None
+    location: Optional[str] = None
+    employment_type: Optional[str] = None
+    experience_required: Optional[str] = None
+    salary_info: Optional[str] = None
+    description: str
+    character_count: int
+    required_skills: List[str] = Field(default_factory=list)
+    preferred_skills: List[str] = Field(default_factory=list)
+
+
+class JobDescriptionImportResponse(BaseModel):
+    success: bool = True
+    message: str
+    data: JobDescriptionImportPreviewData
 
 
 class JobDescriptionCreateResponse(BaseModel):
