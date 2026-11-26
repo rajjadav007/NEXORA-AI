@@ -13,6 +13,10 @@ import {
   deleteJobDescription,
   extractJobRoleAnalysis,
   getJobRoleAnalysis,
+  extractJobRequirements,
+  getJobRequirements,
+  classifyJobSkills,
+  getJobSkillsClassification,
 } from '../src/services/jobDescriptionService.js';
 
 const VALID_DESC =
@@ -239,6 +243,81 @@ describe('jobDescriptionService - Feature 33 Job Description Input', () => {
       assert.ok(calls[0].url.endsWith('/job-descriptions/jd-123/role-analysis?force_recalculate=true'));
       assert.strictEqual(calls[0].method, 'POST');
       assert.ok(calls[1].url.endsWith('/job-descriptions/jd-123/role-analysis'));
+      assert.strictEqual(calls[1].method, 'GET');
+      assert.ok(calls.every((c) => c.headers['X-User-Id'] === 'user-1'));
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  it('extractJobRequirements and getJobRequirements call requirements-analysis endpoints', async () => {
+    const originalFetch = global.fetch;
+    const calls = [];
+    global.fetch = async (url, opts) => {
+      calls.push({ url, method: opts.method, headers: opts.headers });
+      return {
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: {
+            job_id: 'jd-123',
+            technical_skills: [{ name: 'Python', importance: 'Mandatory' }],
+          },
+        }),
+      };
+    };
+
+    try {
+      await assert.rejects(() => extractJobRequirements(''), /required/);
+      await assert.rejects(() => getJobRequirements(''), /required/);
+
+      const postRes = await extractJobRequirements('jd-123', { forceRecalculate: true, userId: 'user-1' });
+      const getRes = await getJobRequirements('jd-123', 'user-1');
+
+      assert.strictEqual(postRes.data.technical_skills[0].name, 'Python');
+      assert.strictEqual(getRes.data.job_id, 'jd-123');
+      assert.strictEqual(calls.length, 2);
+      assert.ok(calls[0].url.endsWith('/job-descriptions/jd-123/requirements-analysis?force_recalculate=true'));
+      assert.strictEqual(calls[0].method, 'POST');
+      assert.ok(calls[1].url.endsWith('/job-descriptions/jd-123/requirements-analysis'));
+      assert.strictEqual(calls[1].method, 'GET');
+      assert.ok(calls.every((c) => c.headers['X-User-Id'] === 'user-1'));
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  it('classifyJobSkills and getJobSkillsClassification call skills-classification endpoints', async () => {
+    const originalFetch = global.fetch;
+    const calls = [];
+    global.fetch = async (url, opts) => {
+      calls.push({ url, method: opts.method, headers: opts.headers });
+      return {
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: {
+            job_id: 'jd-123',
+            classification_summary: { mandatory_count: 1, preferred_count: 0, optional_count: 0, unspecified_count: 0, total_skills: 1 },
+            skills: [{ name: 'Python', classification: 'Mandatory', priority_score: 95 }],
+          },
+        }),
+      };
+    };
+
+    try {
+      await assert.rejects(() => classifyJobSkills(''), /required/);
+      await assert.rejects(() => getJobSkillsClassification(''), /required/);
+
+      const postRes = await classifyJobSkills('jd-123', { forceRecalculate: true, userId: 'user-1' });
+      const getRes = await getJobSkillsClassification('jd-123', 'user-1');
+
+      assert.strictEqual(postRes.data.skills[0].name, 'Python');
+      assert.strictEqual(getRes.data.job_id, 'jd-123');
+      assert.strictEqual(calls.length, 2);
+      assert.ok(calls[0].url.endsWith('/job-descriptions/jd-123/skills-classification?force_recalculate=true'));
+      assert.strictEqual(calls[0].method, 'POST');
+      assert.ok(calls[1].url.endsWith('/job-descriptions/jd-123/skills-classification'));
       assert.strictEqual(calls[1].method, 'GET');
       assert.ok(calls.every((c) => c.headers['X-User-Id'] === 'user-1'));
     } finally {

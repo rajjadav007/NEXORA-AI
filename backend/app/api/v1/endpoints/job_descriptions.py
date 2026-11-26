@@ -25,6 +25,8 @@ from app.schemas.job_description import (
     JobDescriptionListResponse,
 )
 from app.schemas.job_role_analysis import JobRoleAnalysisResponse
+from app.schemas.job_requirement_analysis import JobRequirementAnalysisResponse
+from app.schemas.job_skill_classification import JobSkillClassificationResponse
 from app.services.job_import import (
     JobImportError,
     extract_job_description_from_html,
@@ -32,6 +34,8 @@ from app.services.job_import import (
     normalize_and_validate_url,
 )
 from app.services.job_role_extraction import job_role_extraction_service
+from app.services.job_requirement_extraction import job_requirement_extraction_service
+from app.services.job_skill_classification import job_skill_classification_service
 from app.services.quality_score.ai_evaluator import (
     AIOutputValidationError,
     OllamaUnavailableError,
@@ -458,5 +462,165 @@ def get_job_role_analysis(
     return JobRoleAnalysisResponse(
         success=True,
         message="Job role analysis retrieved successfully.",
+        data=data,
+    )
+
+
+@router.post(
+    "/{job_description_id}/requirements-analysis",
+    response_model=JobRequirementAnalysisResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Extract structured job requirements using Ollama",
+    description="Analyzes a saved job description to extract technical skills, education, experience, soft skills, and domain knowledge with mandatory/preferred classification.",
+)
+async def extract_job_requirements_analysis(
+    job_description_id: str,
+    force_recalculate: bool = Query(False, description="Bypass cached extraction and re-run Ollama"),
+    user_id: Optional[str] = Query(None, description="Authenticated user UUID"),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id", description="Authenticated user UUID"),
+    db: Session = Depends(get_db),
+) -> JobRequirementAnalysisResponse:
+    user_uuid = _require_user_uuid(user_id=user_id, x_user_id=x_user_id)
+    record = _get_owned_job_description(db, job_description_id, user_uuid)
+
+    try:
+        data = await job_requirement_extraction_service.extract_and_save(
+            db=db,
+            record=record,
+            force_recalculate=force_recalculate,
+        )
+        return JobRequirementAnalysisResponse(
+            success=True,
+            message="Job requirement extraction completed successfully."
+            if not data.cached
+            else "Job requirement extraction retrieved from cache.",
+            data=data,
+        )
+    except OllamaUnavailableError as oue:
+        logger.warning("Ollama unavailable for requirement extraction %s: %s", job_description_id, oue)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(oue),
+        )
+    except AIOutputValidationError as aie:
+        logger.error("Job requirement extraction validation failed for %s: %s", job_description_id, aie)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(aie),
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Unexpected error extracting job requirements for %s: %s", job_description_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to extract job requirements.",
+        )
+
+
+@router.get(
+    "/{job_description_id}/requirements-analysis",
+    response_model=JobRequirementAnalysisResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get saved job requirement extraction results",
+)
+def get_job_requirements_analysis(
+    job_description_id: str,
+    user_id: Optional[str] = Query(None, description="Authenticated user UUID"),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id", description="Authenticated user UUID"),
+    db: Session = Depends(get_db),
+) -> JobRequirementAnalysisResponse:
+    user_uuid = _require_user_uuid(user_id=user_id, x_user_id=x_user_id)
+    record = _get_owned_job_description(db, job_description_id, user_uuid)
+
+    data = job_requirement_extraction_service.get_saved_analysis(db=db, record=record)
+    if not data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job requirement analysis has not been run for this job description.",
+        )
+    return JobRequirementAnalysisResponse(
+        success=True,
+        message="Job requirement analysis retrieved successfully.",
+        data=data,
+    )
+
+
+@router.post(
+    "/{job_description_id}/skills-classification",
+    response_model=JobSkillClassificationResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Classify job skills into Mandatory, Preferred, Optional, and Unspecified using Ollama",
+    description="Reuses Feature #36 extracted requirements and original job description to classify skills with priority scoring, expected proficiency, and evidence.",
+)
+async def classify_job_skills(
+    job_description_id: str,
+    force_recalculate: bool = Query(False, description="Bypass cached classification and re-run Ollama"),
+    user_id: Optional[str] = Query(None, description="Authenticated user UUID"),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id", description="Authenticated user UUID"),
+    db: Session = Depends(get_db),
+) -> JobSkillClassificationResponse:
+    user_uuid = _require_user_uuid(user_id=user_id, x_user_id=x_user_id)
+    record = _get_owned_job_description(db, job_description_id, user_uuid)
+
+    try:
+        data = await job_skill_classification_service.classify_and_save(
+            db=db,
+            record=record,
+            force_recalculate=force_recalculate,
+        )
+        return JobSkillClassificationResponse(
+            success=True,
+            message="Skill classification completed successfully."
+            if not data.cached
+            else "Skill classification retrieved from cache.",
+            data=data,
+        )
+    except OllamaUnavailableError as oue:
+        logger.warning("Ollama unavailable for skill classification %s: %s", job_description_id, oue)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(oue),
+        )
+    except AIOutputValidationError as aie:
+        logger.error("Skill classification validation failed for %s: %s", job_description_id, aie)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(aie),
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Unexpected error classifying skills for %s: %s", job_description_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to classify job skills.",
+        )
+
+
+@router.get(
+    "/{job_description_id}/skills-classification",
+    response_model=JobSkillClassificationResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get saved skill classification results",
+)
+def get_job_skills_classification(
+    job_description_id: str,
+    user_id: Optional[str] = Query(None, description="Authenticated user UUID"),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id", description="Authenticated user UUID"),
+    db: Session = Depends(get_db),
+) -> JobSkillClassificationResponse:
+    user_uuid = _require_user_uuid(user_id=user_id, x_user_id=x_user_id)
+    record = _get_owned_job_description(db, job_description_id, user_uuid)
+
+    data = job_skill_classification_service.get_saved_classification(db=db, record=record)
+    if not data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Skill classification has not been run for this job description.",
+        )
+    return JobSkillClassificationResponse(
+        success=True,
+        message="Skill classification retrieved successfully.",
         data=data,
     )

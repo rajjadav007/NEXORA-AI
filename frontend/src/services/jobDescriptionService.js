@@ -216,3 +216,45 @@ export async function getJobRoleAnalysis(jobDescriptionId, userId) {
     headers: buildHeaders(userId),
   });
 }
+
+export async function extractJobRequirements(jobDescriptionId, { forceRecalculate = false, userId } = {}) {
+  if (!jobDescriptionId) {
+    throw new Error('jobDescriptionId is required.');
+  }
+  const query = forceRecalculate ? '?force_recalculate=true' : '';
+  return apiRequest(`/job-descriptions/${encodeURIComponent(jobDescriptionId)}/requirements-analysis${query}`, {
+    method: 'POST',
+    headers: buildHeaders(userId),
+  });
+}
+
+export async function getJobRequirements(jobDescriptionId, userId) {
+  if (!jobDescriptionId) {
+    throw new Error('jobDescriptionId is required.');
+  }
+  return apiRequest(`/job-descriptions/${encodeURIComponent(jobDescriptionId)}/requirements-analysis`, {
+    method: 'GET',
+    headers: buildHeaders(userId),
+  });
+}
+
+export async function classifyJobSkills(jobDescriptionId, { forceRecalculate = false, userId } = {}) {
+  if (!jobDescriptionId) {
+    throw new Error('jobDescriptionId is required.');
+  }
+  const query = forceRecalculate ? '?force_recalculate=true' : '';
+  return apiRequest(`/job-descriptions/${encodeURIComponent(jobDescriptionId)}/skills-classification${query}`, {
+    method: 'POST',
+    headers: buildHeaders(userId),
+  });
+}
+
+export async function getJobSkillsClassification(jobDescriptionId, userId) {
+  if (!jobDescriptionId) {
+    throw new Error('jobDescriptionId is required.');
+  }
+  return apiRequest(`/job-descriptions/${encodeURIComponent(jobDescriptionId)}/skills-classification`, {
+    method: 'GET',
+    headers: buildHeaders(userId),
+  });
+}

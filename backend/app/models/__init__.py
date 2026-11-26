@@ -23,6 +23,8 @@ from app.models.improvement_tracker import (
 from app.models.report import ResumeReport
 from app.models.job_description import JobDescription
 from app.models.job_role_analysis import JobRoleAnalysis
+from app.models.job_requirement_analysis import JobRequirementAnalysis
+from app.models.job_skill_classification import JobSkillClassification
 
 __all__ = [
     "Base",
@@ -52,4 +54,6 @@ __all__ = [
     "ResumeReport",
     "JobDescription",
     "JobRoleAnalysis",
+    "JobRequirementAnalysis",
+    "JobSkillClassification",
 ]

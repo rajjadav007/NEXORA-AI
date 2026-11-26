@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Briefcase, Building2, Clock, FileText, Globe, MapPin, Sparkles, Trash2 } from 'lucide-react';
+import { Briefcase, Building2, Clock, FileText, Globe, Layers, ListChecks, MapPin, Sparkles, Trash2 } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { EmptyState } from '../components/layout/EmptyState';
 import { JobDescriptionInputForm } from '../components/jobs/JobDescriptionInputForm';
 import { JobDescriptionUrlImport } from '../components/jobs/JobDescriptionUrlImport';
 import { JobRoleAnalysisSection } from '../components/jobs/JobRoleAnalysisSection';
+import { JobRequirementsSection } from '../components/jobs/JobRequirementsSection';
+import { SkillClassificationSection } from '../components/jobs/SkillClassificationSection';
 import { cn } from '../utils/cn';
 import {
   Alert,
@@ -18,7 +20,9 @@ import {
   LoadingIndicator,
 } from '../components/ui';
 import {
+  classifyJobSkills,
   deleteJobDescription,
+  extractJobRequirements,
   extractJobRoleAnalysis,
   listJobDescriptions,
 } from '../services/jobDescriptionService';
@@ -33,6 +37,12 @@ export function JobsPage() {
   const [roleAnalyses, setRoleAnalyses] = useState({});
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState('');
+  const [requirementAnalyses, setRequirementAnalyses] = useState({});
+  const [isAnalyzingRequirements, setIsAnalyzingRequirements] = useState(false);
+  const [requirementsError, setRequirementsError] = useState('');
+  const [skillClassifications, setSkillClassifications] = useState({});
+  const [isClassifyingSkills, setIsClassifyingSkills] = useState(false);
+  const [skillClassificationError, setSkillClassificationError] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -103,6 +113,48 @@ export function JobsPage() {
     }
   };
 
+  const handleAnalyzeRequirements = async (jobId, forceRecalculate = false) => {
+    setSelectedJobId(jobId);
+    setIsAnalyzingRequirements(true);
+    setRequirementsError('');
+    try {
+      const res = await extractJobRequirements(jobId, { forceRecalculate });
+      if (res?.data) {
+        setRequirementAnalyses((prev) => ({ ...prev, [jobId]: res.data }));
+        setSavedJobs((prev) =>
+          prev.map((item) =>
+            item.id === jobId ? { ...item, analysis_status: res.data.analysis_status || 'COMPLETED' } : item
+          )
+        );
+      }
+    } catch (err) {
+      setRequirementsError(err.message || 'Failed to extract job requirements.');
+    } finally {
+      setIsAnalyzingRequirements(false);
+    }
+  };
+
+  const handleClassifySkills = async (jobId, forceRecalculate = false) => {
+    setSelectedJobId(jobId);
+    setIsClassifyingSkills(true);
+    setSkillClassificationError('');
+    try {
+      const res = await classifyJobSkills(jobId, { forceRecalculate });
+      if (res?.data) {
+        setSkillClassifications((prev) => ({ ...prev, [jobId]: res.data }));
+        setSavedJobs((prev) =>
+          prev.map((item) =>
+            item.id === jobId ? { ...item, analysis_status: res.data.analysis_status || 'COMPLETED' } : item
+          )
+        );
+      }
+    } catch (err) {
+      setSkillClassificationError(err.message || 'Failed to classify job skills.');
+    } finally {
+      setIsClassifyingSkills(false);
+    }
+  };
+
   const selectedJob = savedJobs.find((item) => item.id === selectedJobId) || null;
 
   return (
@@ -110,8 +162,8 @@ export function JobsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <PageHeader
           title="Job Description Analyzer"
-          description="Enter manually or import from a job posting URL, then extract structured role intelligence."
-          badge="Phase 6 • Features 33–35"
+          description="Enter manually or import from a job posting URL, then extract structured role and requirement intelligence."
+          badge="Phase 6 • Features 33–37"
         />
 
         <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl self-start sm:self-auto border border-slate-200">
@@ -225,6 +277,26 @@ export function JobsPage() {
                     </Button>
                     <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAnalyzeRequirements(job.id, false)}
+                      disabled={isAnalyzingRequirements && selectedJobId === job.id}
+                    >
+                      <ListChecks className="h-3.5 w-3.5 mr-1.5" />
+                      <span>Analyze Requirements</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleClassifySkills(job.id, false)}
+                      disabled={isClassifyingSkills && selectedJobId === job.id}
+                    >
+                      <Layers className="h-3.5 w-3.5 mr-1.5" />
+                      <span>Classify Skills</span>
+                    </Button>
+                    <Button
+                      type="button"
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(job.id)}
@@ -249,6 +321,24 @@ export function JobsPage() {
         error={analysisError}
         onAnalyze={handleAnalyzeJob}
         onRetry={() => selectedJob && handleAnalyzeJob(selectedJob.id, true)}
+      />
+
+      <JobRequirementsSection
+        selectedJob={selectedJob}
+        requirements={selectedJob ? requirementAnalyses[selectedJob.id] : null}
+        isLoading={isAnalyzingRequirements}
+        error={requirementsError}
+        onAnalyze={handleAnalyzeRequirements}
+        onRetry={() => selectedJob && handleAnalyzeRequirements(selectedJob.id, true)}
+      />
+
+      <SkillClassificationSection
+        selectedJob={selectedJob}
+        classification={selectedJob ? skillClassifications[selectedJob.id] : null}
+        isLoading={isClassifyingSkills}
+        error={skillClassificationError}
+        onAnalyze={handleClassifySkills}
+        onRetry={() => selectedJob && handleClassifySkills(selectedJob.id, true)}
       />
     </div>
   );
