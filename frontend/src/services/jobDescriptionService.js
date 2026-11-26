@@ -258,3 +258,24 @@ export async function getJobSkillsClassification(jobDescriptionId, userId) {
     headers: buildHeaders(userId),
   });
 }
+
+export async function generateJobDescriptionReport(jobDescriptionId, { regenerate = false, userId } = {}) {
+  if (!jobDescriptionId) {
+    throw new Error('jobDescriptionId is required.');
+  }
+  const query = regenerate ? '?regenerate=true' : '';
+  return apiRequest(`/job-descriptions/${encodeURIComponent(jobDescriptionId)}/report${query}`, {
+    method: 'POST',
+    headers: buildHeaders(userId),
+  });
+}
+
+export async function getJobDescriptionReport(jobDescriptionId, userId) {
+  if (!jobDescriptionId) {
+    throw new Error('jobDescriptionId is required.');
+  }
+  return apiRequest(`/job-descriptions/${encodeURIComponent(jobDescriptionId)}/report`, {
+    method: 'GET',
+    headers: buildHeaders(userId),
+  });
+}

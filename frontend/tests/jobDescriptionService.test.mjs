@@ -17,6 +17,8 @@ import {
   getJobRequirements,
   classifyJobSkills,
   getJobSkillsClassification,
+  generateJobDescriptionReport,
+  getJobDescriptionReport,
 } from '../src/services/jobDescriptionService.js';
 
 const VALID_DESC =
@@ -318,6 +320,44 @@ describe('jobDescriptionService - Feature 33 Job Description Input', () => {
       assert.ok(calls[0].url.endsWith('/job-descriptions/jd-123/skills-classification?force_recalculate=true'));
       assert.strictEqual(calls[0].method, 'POST');
       assert.ok(calls[1].url.endsWith('/job-descriptions/jd-123/skills-classification'));
+      assert.strictEqual(calls[1].method, 'GET');
+      assert.ok(calls.every((c) => c.headers['X-User-Id'] === 'user-1'));
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  it('generateJobDescriptionReport and getJobDescriptionReport call report endpoints', async () => {
+    const originalFetch = global.fetch;
+    const calls = [];
+    global.fetch = async (url, opts) => {
+      calls.push({ url, method: opts.method, headers: opts.headers });
+      return {
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: {
+            job_id: 'jd-123',
+            report_version: '1.0',
+            overview: { job_title: 'AI Engineer' },
+          },
+        }),
+      };
+    };
+
+    try {
+      await assert.rejects(() => generateJobDescriptionReport(''), /required/);
+      await assert.rejects(() => getJobDescriptionReport(''), /required/);
+
+      const postRes = await generateJobDescriptionReport('jd-123', { regenerate: true, userId: 'user-1' });
+      const getRes = await getJobDescriptionReport('jd-123', 'user-1');
+
+      assert.strictEqual(postRes.data.report_version, '1.0');
+      assert.strictEqual(getRes.data.job_id, 'jd-123');
+      assert.strictEqual(calls.length, 2);
+      assert.ok(calls[0].url.endsWith('/job-descriptions/jd-123/report?regenerate=true'));
+      assert.strictEqual(calls[0].method, 'POST');
+      assert.ok(calls[1].url.endsWith('/job-descriptions/jd-123/report'));
       assert.strictEqual(calls[1].method, 'GET');
       assert.ok(calls.every((c) => c.headers['X-User-Id'] === 'user-1'));
     } finally {

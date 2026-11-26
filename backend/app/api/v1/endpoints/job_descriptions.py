@@ -27,6 +27,7 @@ from app.schemas.job_description import (
 from app.schemas.job_role_analysis import JobRoleAnalysisResponse
 from app.schemas.job_requirement_analysis import JobRequirementAnalysisResponse
 from app.schemas.job_skill_classification import JobSkillClassificationResponse
+from app.schemas.job_description_report import JobDescriptionReportResponse
 from app.services.job_import import (
     JobImportError,
     extract_job_description_from_html,
@@ -36,6 +37,10 @@ from app.services.job_import import (
 from app.services.job_role_extraction import job_role_extraction_service
 from app.services.job_requirement_extraction import job_requirement_extraction_service
 from app.services.job_skill_classification import job_skill_classification_service
+from app.services.job_description_report import (
+    PrerequisiteAnalysisMissingError,
+    job_description_report_service,
+)
 from app.services.quality_score.ai_evaluator import (
     AIOutputValidationError,
     OllamaUnavailableError,
@@ -622,5 +627,91 @@ def get_job_skills_classification(
     return JobSkillClassificationResponse(
         success=True,
         message="Skill classification retrieved successfully.",
+        data=data,
+    )
+
+
+@router.post(
+    "/{job_description_id}/report",
+    response_model=JobDescriptionReportResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Generate comprehensive Job Description Analysis Report",
+    description="Aggregates Features #33-#37, validates prerequisites, generates complexity & AI insights, and persists a versioned report.",
+)
+async def generate_job_description_report(
+    job_description_id: str,
+    regenerate: bool = Query(False, description="Force regeneration and increment report version"),
+    user_id: Optional[str] = Query(None, description="Authenticated user UUID"),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id", description="Authenticated user UUID"),
+    db: Session = Depends(get_db),
+) -> JobDescriptionReportResponse:
+    user_uuid = _require_user_uuid(user_id=user_id, x_user_id=x_user_id)
+    record = _get_owned_job_description(db, job_description_id, user_uuid)
+
+    try:
+        data = await job_description_report_service.generate_and_save(
+            db=db,
+            record=record,
+            regenerate=regenerate,
+        )
+        return JobDescriptionReportResponse(
+            success=True,
+            message="Job description report generated successfully."
+            if not data.cached
+            else "Job description report retrieved from cache.",
+            data=data,
+        )
+    except PrerequisiteAnalysisMissingError as pme:
+        logger.info("Missing prerequisites for job report %s: %s", job_description_id, pme.missing_features)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(pme),
+        )
+    except OllamaUnavailableError as oue:
+        logger.warning("Ollama unavailable for job report %s: %s", job_description_id, oue)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(oue),
+        )
+    except AIOutputValidationError as aie:
+        logger.error("Job report validation failed for %s: %s", job_description_id, aie)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(aie),
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Unexpected error generating job report for %s: %s", job_description_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate job description report.",
+        )
+
+
+@router.get(
+    "/{job_description_id}/report",
+    response_model=JobDescriptionReportResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get saved Job Description Analysis Report",
+)
+def get_job_description_report(
+    job_description_id: str,
+    user_id: Optional[str] = Query(None, description="Authenticated user UUID"),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id", description="Authenticated user UUID"),
+    db: Session = Depends(get_db),
+) -> JobDescriptionReportResponse:
+    user_uuid = _require_user_uuid(user_id=user_id, x_user_id=x_user_id)
+    record = _get_owned_job_description(db, job_description_id, user_uuid)
+
+    data = job_description_report_service.get_saved_report(db=db, record=record)
+    if not data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job description report has not been generated for this job description.",
+        )
+    return JobDescriptionReportResponse(
+        success=True,
+        message="Job description report retrieved successfully.",
         data=data,
     )

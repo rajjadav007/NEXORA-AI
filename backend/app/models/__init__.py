@@ -25,6 +25,7 @@ from app.models.job_description import JobDescription
 from app.models.job_role_analysis import JobRoleAnalysis
 from app.models.job_requirement_analysis import JobRequirementAnalysis
 from app.models.job_skill_classification import JobSkillClassification
+from app.models.job_description_report import JobDescriptionReport
 
 __all__ = [
     "Base",
@@ -56,4 +57,5 @@ __all__ = [
     "JobRoleAnalysis",
     "JobRequirementAnalysis",
     "JobSkillClassification",
+    "JobDescriptionReport",
 ]

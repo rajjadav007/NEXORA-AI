@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Briefcase, Building2, Clock, FileText, Globe, Layers, ListChecks, MapPin, Sparkles, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Briefcase, Building2, Clock, FileBarChart2, FileText, Globe, Layers, ListChecks, MapPin, Sparkles, Trash2 } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { EmptyState } from '../components/layout/EmptyState';
 import { JobDescriptionInputForm } from '../components/jobs/JobDescriptionInputForm';
@@ -163,7 +164,7 @@ export function JobsPage() {
         <PageHeader
           title="Job Description Analyzer"
           description="Enter manually or import from a job posting URL, then extract structured role and requirement intelligence."
-          badge="Phase 6 • Features 33–37"
+          badge="Phase 6 • Features 33–38"
         />
 
         <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl self-start sm:self-auto border border-slate-200">
@@ -295,6 +296,12 @@ export function JobsPage() {
                       <Layers className="h-3.5 w-3.5 mr-1.5" />
                       <span>Classify Skills</span>
                     </Button>
+                    <Link to={`/jobs/${job.id}/report`}>
+                      <Button type="button" variant="outline" size="sm">
+                        <FileBarChart2 className="h-3.5 w-3.5 mr-1.5" />
+                        <span>View Report</span>
+                      </Button>
+                    </Link>
                     <Button
                       type="button"
                       variant="ghost"
