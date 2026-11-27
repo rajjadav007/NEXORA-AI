@@ -9,6 +9,7 @@ import logging
 from typing import Optional, Dict, Any
 import httpx
 from app.core.config import settings
+from app.services.ollama_client import post_ollama_chat
 
 logger = logging.getLogger(__name__)
 
@@ -77,28 +78,28 @@ class AIExtractor:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
-                    f"{self.base_url}/api/chat",
-                    json=payload,
+            response = await post_ollama_chat(
+                base_url=self.base_url,
+                payload=payload,
+                timeout=self.timeout,
+            )
+
+            if response.status_code != 200:
+                logger.info(
+                    "Ollama request returned HTTP %d, falling back to heuristic",
+                    response.status_code,
                 )
+                return None
 
-                if response.status_code != 200:
-                    logger.info(
-                        "Ollama request returned HTTP %d, falling back to heuristic",
-                        response.status_code,
-                    )
-                    return None
+            result_json = response.json()
+            message_content = result_json.get("message", {}).get("content", "")
 
-                result_json = response.json()
-                message_content = result_json.get("message", {}).get("content", "")
+            if not message_content:
+                return None
 
-                if not message_content:
-                    return None
-
-                parsed = json.loads(message_content)
-                if isinstance(parsed, dict):
-                    return parsed
+            parsed = json.loads(message_content)
+            if isinstance(parsed, dict):
+                return parsed
 
         except httpx.ConnectError:
             logger.info("Local Ollama service not reachable, using heuristic fallback")

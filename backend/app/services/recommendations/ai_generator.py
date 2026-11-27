@@ -10,6 +10,7 @@ from typing import Optional, List, Dict, Any
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama import ChatOllama
 from app.core.config import settings
+from app.services.ollama_client import get_ollama_semaphore
 from app.schemas.recommendations import (
     ResumeRecommendationsAIOutput,
     RecommendationItemAI,
@@ -93,7 +94,7 @@ class RecommendationAIGenerator:
             base_url=self.base_url,
             model=self.model,
             temperature=0.2,
-            timeout=self.timeout,
+            client_kwargs={"timeout": self.timeout},
         )
 
     def generate_heuristic_recommendations(
@@ -358,11 +359,12 @@ class RecommendationAIGenerator:
             logger.info("Invoking ChatOllama for resume recommendations with model %s at %s", self.model, self.base_url)
             start_time = time.time()
 
-            result = await chain.ainvoke({
-                "resume_overview": resume_overview[:2000],
-                "combined_findings": json.dumps(combined_findings, indent=2)[:4000],
-                "coverage_status": json.dumps(coverage_summary, indent=2),
-            })
+            async with get_ollama_semaphore():
+                result = await chain.ainvoke({
+                    "resume_overview": resume_overview[:2000],
+                    "combined_findings": json.dumps(combined_findings, indent=2)[:4000],
+                    "coverage_status": json.dumps(coverage_summary, indent=2),
+                })
             duration = time.time() - start_time
             logger.info("ChatOllama recommendation generation completed in %.2f seconds", duration)
 

@@ -15,6 +15,7 @@ from langchain_ollama import ChatOllama
 from pydantic import ValidationError
 
 from app.core.config import settings
+from app.services.ollama_client import get_ollama_semaphore
 from app.schemas.weakness_analysis import (
     ResumeWeaknessAIStructuredOutput,
     WeaknessItemAI,
@@ -86,7 +87,7 @@ class WeaknessAIEvaluator:
             base_url=self.base_url,
             model=self.model,
             temperature=0.1,
-            timeout=self.timeout,
+            client_kwargs={"timeout": self.timeout},
         )
 
     async def evaluate_weaknesses(
@@ -111,7 +112,8 @@ class WeaknessAIEvaluator:
         try:
             logger.info("Invoking ChatOllama for weakness analysis with model %s at %s", self.model, self.base_url)
             start_time = time.time()
-            result = await structured_llm.ainvoke(formatted_prompt)
+            async with get_ollama_semaphore():
+                result = await structured_llm.ainvoke(formatted_prompt)
             duration = time.time() - start_time
             logger.info("ChatOllama weakness analysis completed in %.2f seconds", duration)
 

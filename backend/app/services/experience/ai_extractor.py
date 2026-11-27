@@ -9,6 +9,7 @@ import logging
 from typing import Optional, List, Dict, Any
 import httpx
 from app.core.config import settings
+from app.services.ollama_client import post_ollama_chat
 
 logger = logging.getLogger(__name__)
 
@@ -90,12 +91,11 @@ class ExperienceAIExtractor:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
-                    f"{self.base_url}/api/chat",
-                    json=payload,
-                    headers={"Content-Type": "application/json"},
-                )
+            response = await post_ollama_chat(
+                base_url=self.base_url,
+                payload=payload,
+                timeout=self.timeout,
+            )
 
             if response.status_code != 200:
                 logger.warning(

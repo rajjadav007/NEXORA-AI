@@ -16,7 +16,7 @@ export async function getResumeWeaknesses(resumeId) {
     throw new Error('resumeId is required to fetch weakness analysis.');
   }
 
-  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/weaknesses`;
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/weaknesses?optional=true`;
   const response = await fetch(url);
   const responseBody = await response.json().catch(() => ({}));
 

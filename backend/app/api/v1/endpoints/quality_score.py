@@ -6,6 +6,7 @@ Phase 4 | Feature 21: Resume Quality Score Engine
 import logging
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Header
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.core.security import verify_resume_access
@@ -99,18 +100,21 @@ async def analyze_quality_score(
 )
 def get_quality_score(
     resume_id: str,
+    optional: bool = Query(False, description="Return 200 with data=null instead of 404 when not analyzed"),
     user_id: Optional[str] = Query(None),
     x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     db: Session = Depends(get_db),
 ) -> QualityScoreResponse:
     """
     Retrieves the persisted quality score for the specified resume.
-    Returns 404 if not yet analyzed.
+    Returns 404 if not yet analyzed (unless optional=true).
     """
     verify_resume_access(resume_id, db, user_id=user_id, x_user_id=x_user_id)
 
     data = quality_score_service.get_quality_score(resume_id, db)
     if not data:
+        if optional:
+            return JSONResponse(content={"success": True, "message": "No quality score evaluation found", "data": None})
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"No quality score evaluation found for resume ID: {resume_id}",

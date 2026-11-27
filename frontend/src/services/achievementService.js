@@ -16,7 +16,7 @@ export async function getResumeAchievements(resumeId) {
     throw new Error('resumeId is required to fetch achievement analysis.');
   }
 
-  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/achievements/analysis`;
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/achievements/analysis?optional=true`;
   const response = await fetch(url);
   const responseBody = await response.json().catch(() => ({}));
 

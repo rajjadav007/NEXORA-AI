@@ -4,11 +4,14 @@ Phase 3 | Feature 13: Personal Information Extraction
 Coordinates deterministic rules, AI extraction, fallback heuristics, normalization, validation, and database persistence.
 """
 
+import asyncio
 import uuid
 import logging
+import weakref
 from typing import Optional, Dict, Any, List
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from app.models.resume import Resume, ResumeVersion
 from app.models.personal_information import ResumePersonalInformation
@@ -55,6 +58,21 @@ class PersonalInfoExtractionService:
     def __init__(self):
         # In-memory staging cache for preview sessions prior to permanent save
         self._staging_cache: Dict[str, PersonalInformationData] = {}
+        self._loop_locks: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, Dict[str, asyncio.Lock]]" = (
+            weakref.WeakKeyDictionary()
+        )
+
+    def _get_resume_lock(self, resume_id: str) -> asyncio.Lock:
+        loop = asyncio.get_running_loop()
+        locks = self._loop_locks.get(loop)
+        if locks is None:
+            locks = {}
+            self._loop_locks[loop] = locks
+        lock = locks.get(resume_id)
+        if lock is None:
+            lock = asyncio.Lock()
+            locks[resume_id] = lock
+        return lock
 
     def _resolve_cleaned_text(self, resume_id: str, db: Optional[Session] = None) -> Optional[str]:
         """
@@ -108,6 +126,25 @@ class PersonalInfoExtractionService:
         """
         Executes hybrid personal information extraction pipeline and persists results.
         """
+        async with self._get_resume_lock(resume_id):
+            return await self._extract_personal_information_locked(
+                resume_id=resume_id,
+                cleaned_text_override=cleaned_text_override,
+                user_id=user_id,
+                reprocess=reprocess,
+                force_overwrite=force_overwrite,
+                db=db,
+            )
+
+    async def _extract_personal_information_locked(
+        self,
+        resume_id: str,
+        cleaned_text_override: Optional[str] = None,
+        user_id: Optional[str] = None,
+        reprocess: bool = False,
+        force_overwrite: bool = False,
+        db: Optional[Session] = None,
+    ) -> PersonalInformationData:
         # Check if already processed and not reprocessing
         existing_record = None
         parsed_resume_uuid = None
@@ -321,9 +358,20 @@ class PersonalInfoExtractionService:
                         manually_edited_fields=[],
                     )
                     db.add(new_record)
-                    db.commit()
-                    db.refresh(new_record)
-                    return self._record_to_schema(new_record)
+                    try:
+                        db.commit()
+                        db.refresh(new_record)
+                        return self._record_to_schema(new_record)
+                    except IntegrityError:
+                        db.rollback()
+                        raced_record = db.execute(
+                            select(ResumePersonalInformation).where(
+                                ResumePersonalInformation.resume_id == parsed_resume_uuid
+                            )
+                        ).scalar_one_or_none()
+                        if raced_record:
+                            return self._record_to_schema(raced_record)
+                        raise
 
         # Staging cache fallback if not permanently stored in DB
         result_payload = PersonalInformationData(

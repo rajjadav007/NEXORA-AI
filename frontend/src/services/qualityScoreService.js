@@ -16,7 +16,7 @@ export async function getResumeQualityScore(resumeId) {
     throw new Error('resumeId is required to fetch quality score.');
   }
 
-  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/quality-score`;
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/quality-score?optional=true`;
   const response = await fetch(url);
   const responseBody = await response.json().catch(() => ({}));
 

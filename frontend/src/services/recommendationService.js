@@ -20,7 +20,7 @@ export async function getResumeRecommendations(resumeId, { category, priority, i
     throw new Error('resumeId is required to fetch recommendations.');
   }
 
-  const queryParams = new URLSearchParams();
+  const queryParams = new URLSearchParams({ optional: 'true' });
   if (category) queryParams.append('category', category);
   if (priority) queryParams.append('priority', priority);
   if (typeof isCompleted === 'boolean') queryParams.append('is_completed', isCompleted.toString());

@@ -16,7 +16,7 @@ export async function getResumeStrengths(resumeId) {
     throw new Error('resumeId is required to fetch strength analysis.');
   }
 
-  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/strengths`;
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/strengths?optional=true`;
   const response = await fetch(url);
   const responseBody = await response.json().catch(() => ({}));
 

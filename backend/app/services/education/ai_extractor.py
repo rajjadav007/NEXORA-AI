@@ -9,6 +9,7 @@ import logging
 from typing import Optional, List, Dict, Any
 import httpx
 from app.core.config import settings
+from app.services.ollama_client import post_ollama_chat
 
 logger = logging.getLogger(__name__)
 
@@ -95,24 +96,24 @@ class EducationAIExtractor:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
-                    f"{self.base_url}/api/chat",
-                    json=payload,
-                )
+            response = await post_ollama_chat(
+                base_url=self.base_url,
+                payload=payload,
+                timeout=self.timeout,
+            )
 
-                if response.status_code != 200:
-                    logger.info("Ollama education extraction HTTP %d, falling back to deterministic", response.status_code)
-                    return None
+            if response.status_code != 200:
+                logger.info("Ollama education extraction HTTP %d, falling back to deterministic", response.status_code)
+                return None
 
-                result_json = response.json()
-                content = result_json.get("message", {}).get("content", "")
-                if not content:
-                    return None
+            result_json = response.json()
+            content = result_json.get("message", {}).get("content", "")
+            if not content:
+                return None
 
-                parsed = json.loads(content)
-                if isinstance(parsed, dict) and "education" in parsed and isinstance(parsed["education"], list):
-                    return parsed["education"]
+            parsed = json.loads(content)
+            if isinstance(parsed, dict) and "education" in parsed and isinstance(parsed["education"], list):
+                return parsed["education"]
 
         except httpx.ConnectError:
             logger.info("Local Ollama service not reachable, using deterministic education fallback")

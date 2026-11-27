@@ -16,7 +16,7 @@ export async function getResumeATS(resumeId) {
     throw new Error('resumeId is required to fetch ATS analysis.');
   }
 
-  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/ats`;
+  const url = `${API_BASE_URL}/resumes/${encodeURIComponent(resumeId)}/ats?optional=true`;
   const response = await fetch(url);
   const responseBody = await response.json().catch(() => ({}));
 

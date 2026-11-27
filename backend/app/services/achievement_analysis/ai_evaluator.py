@@ -16,6 +16,7 @@ from langchain_ollama import ChatOllama
 from pydantic import ValidationError
 
 from app.core.config import settings
+from app.services.ollama_client import get_ollama_semaphore
 from app.schemas.achievement_analysis import (
     ResumeAchievementAIStructuredOutput,
     AchievementItemAI,
@@ -82,7 +83,7 @@ class AchievementAIEvaluator:
             base_url=self.base_url,
             model=self.model,
             temperature=0.1,
-            timeout=self.timeout,
+            client_kwargs={"timeout": self.timeout},
         )
 
     def _detect_metrics_heuristic(self, text: str) -> Dict[str, List[str]]:
@@ -207,7 +208,8 @@ class AchievementAIEvaluator:
 
             logger.info("Invoking ChatOllama for achievement analysis with model %s at %s", self.model, self.base_url)
             start_time = time.time()
-            result = await structured_llm.ainvoke(formatted_prompt)
+            async with get_ollama_semaphore():
+                result = await structured_llm.ainvoke(formatted_prompt)
             duration = time.time() - start_time
             logger.info("ChatOllama achievement analysis completed in %.2f seconds", duration)
 
