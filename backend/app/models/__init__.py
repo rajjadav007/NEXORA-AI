@@ -26,6 +26,7 @@ from app.models.job_role_analysis import JobRoleAnalysis
 from app.models.job_requirement_analysis import JobRequirementAnalysis
 from app.models.job_skill_classification import JobSkillClassification
 from app.models.job_description_report import JobDescriptionReport
+from app.models.job_match import JobMatch
 
 __all__ = [
     "Base",
@@ -58,4 +59,5 @@ __all__ = [
     "JobRequirementAnalysis",
     "JobSkillClassification",
     "JobDescriptionReport",
+    "JobMatch",
 ]

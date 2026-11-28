@@ -18,6 +18,7 @@ from app.api.v1.endpoints.analytics import router as analytics_router
 from app.api.v1.endpoints.improvements import router as improvements_router
 from app.api.v1.endpoints.reports import router as reports_router
 from app.api.v1.endpoints.job_descriptions import router as job_descriptions_router
+from app.api.v1.endpoints.job_matches import router as job_matches_router
 
 api_router = APIRouter()
 api_router.include_router(health_router)
@@ -41,3 +42,4 @@ api_router.include_router(analytics_router, prefix="/resumes", tags=["Resume Ana
 api_router.include_router(improvements_router, prefix="/resumes", tags=["Resume Improvement Tracker"])
 api_router.include_router(reports_router, prefix="/resumes", tags=["AI Resume Report"])
 api_router.include_router(job_descriptions_router, prefix="/job-descriptions", tags=["Job Descriptions"])
+api_router.include_router(job_matches_router, prefix="/job-matches", tags=["Job Matching"])
